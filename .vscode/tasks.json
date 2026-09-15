@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "options": {
+    "cwd": "${workspaceFolder}",
+    "env": { "PATH": "C:\\msys64\\ucrt64\\bin;${env:PATH}" }
+  },
+  "presentation": { "reveal": "always", "panel": "shared", "clear": true },
+  "tasks": [
+    {
+      "label": "Build example GUI",
+      "type": "process",
+      "command": "g++",
+      "args": [
+        "-std=c++17", "-g", "-Wall", "-Wextra",
+        "Example/main.cpp",
+        "ProvidedGUI/ChessFrontend.cpp",
+        "-IProvidedGUI",
+        "-o", "gui_example.exe",
+        "-lsfml-graphics", "-lsfml-window", "-lsfml-system"
+      ],
+      "problemMatcher": ["$gcc"],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "Build client",
+      "type": "shell",
+      "command": "g++ -std=c++17 -g -Wall -Wextra client/*.cpp ProvidedGUI/ChessFrontend.cpp -IProvidedGUI -o client.exe -lsfml-graphics -lsfml-window -lsfml-system -lsfml-network",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    },
+    {
+      "label": "Build server",
+      "type": "shell",
+      "command": "g++ -std=c++17 -g -Wall -Wextra server/*.cpp -o server.exe -lsfml-network -lsfml-system",
+      "problemMatcher": ["$gcc"],
+      "group": "build"
+    }
+  ]
+}

@@ -85,10 +85,11 @@ It writes the code. It cannot see your screen or play chess. These are yours:
 | Context indicator near full | Type `/compact`, or just start a fresh session and resume — the files carry the state. |
 | You want to know your usage | Type `/usage`. |
 
-## 6. GitHub (optional)
+## 6. GitHub — this is the cloud backup
 
-Nothing needs GitHub. Git already works locally — three commits so far. But an
-off-machine backup is cheap insurance for a project this size.
+Git on its own only saves history to this disk. Pushing to GitHub is what puts
+it in the cloud, so if the laptop dies you lose nothing. Do it early, not once
+the project is big.
 
 You have GitHub Desktop, which handles the login so nobody has to type
 credentials:
@@ -100,10 +101,26 @@ credentials:
    graded project is a plagiarism problem waiting to happen — both for you and
    for whoever copies it.
 
-`CLAUDE.md` is gitignored, so it never reaches GitHub. `docs/` is tracked
-deliberately, so your design rationale and revision notes are backed up.
+Then, in Claude Code: **"push to the remote after every commit from now on."**
+A backup you have to remember to make is not a backup.
 
-Once a remote exists, Claude Code can push after each phase — ask it to.
+### What is and isn't backed up
+
+Everything is tracked except build output — so your source, the docs, the
+design rationale, the VS Code config and `CLAUDE.md` all go to GitHub.
+
+Deliberately not backed up, because all three are regenerable:
+
+- `gui_example.exe`, `client.exe`, `server.exe` — rebuilt with one command.
+- The 18 DLLs — re-copied with the `ldd` command in the README.
+- `stockfish/stockfish.exe` — 103 MB, which is over GitHub's 100 MB per-file
+  limit and would be rejected. Re-download it from the Stockfish 19 release;
+  the README records the exact build and its SHA-256 so you can verify you got
+  the same one.
+
+So the recovery story from a dead laptop is: clone the repo, install MSYS2 and
+the three pacman packages, re-download Stockfish, rebuild. Nothing you wrote is
+lost.
 
 ## 7. Don't
 

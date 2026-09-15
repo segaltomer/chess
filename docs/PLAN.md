@@ -90,7 +90,8 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 - [ ] README covers every item in §83
 - [ ] `client.exe`, `server.exe`, Stockfish binary, and the 18 DLLs present
 - [ ] No absolute paths anywhere in the source
-- [ ] `.vscode/`, `CLAUDE.md`, `docs/` and `.git/` removed from the zip
+- [ ] `.vscode/`, `CLAUDE.md`, `docs/` and `.git/` removed **from the zip**
+      (they stay in the repo — they are tracked so they get backed up)
 - [ ] Zip named `<your ID>.zip` (§84)
 - [ ] **Check the zip fits the upload limit.** `stockfish.exe` alone is 103 MB,
       so the finished zip will exceed 100 MB. §82 requires the binary, so if

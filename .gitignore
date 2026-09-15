@@ -8,9 +8,11 @@ build/
 # Chess engine binary (shipped with the submission, not tracked here)
 stockfish*
 
-# Local editor config, AI briefing, one-off environment setup
-.vscode/
-CLAUDE.md
+# One-off environment setup leftovers
 setup_chess.bat
 setup_log.txt
 setup_done.marker
+
+# NOTE: .vscode/ and CLAUDE.md ARE tracked, on purpose. Git is the off-machine
+# backup, and anything ignored here is not backed up. Both are excluded from
+# the submission zip manually instead - see docs/PLAN.md Phase 7.
