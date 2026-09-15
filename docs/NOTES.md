@@ -44,3 +44,41 @@ validates Local and Bot games (§17-18) while the Server validates Online ones
 Windows only looks next to the executable and on `PATH`, so the DLLs are copied
 into the project folder — and they must ship in the submission zip, because the
 grading machine will not have our `PATH`.
+
+---
+
+## Board and piece representation · `common/ChessTypes`, `common/Move`, `common/Board` · §26-28, §34-36
+
+A position is one flat `std::array<Piece, 64>`, indexed 0 = a8 up to 63 = h1 —
+the same numbering `ChessFrontend::setBoard` uses, so `Board::toDisplay()` is a
+straight character-by-character translation with no row flipping anywhere.
+`Piece` is a two-field value (`PieceType`, `Color`), where `PieceType::None`
+means the square is empty. `Board` also holds the two facts that belong to a
+position but are invisible on it: the four castling rights, and the en passant
+target square.
+
+**Why values and not piece objects:** deciding whether a move is legal means
+asking "if I played this, would my own king be attacked?" (§31). The cheapest
+honest way to answer is to copy the board, play the move on the copy and look.
+With plain values that copy is 64 small structs. With a `unique_ptr<Piece>` per
+square it would be a deep clone of up to 32 heap objects, on every candidate
+move — slower, and far more code to get wrong. Behaviour still gets to be
+polymorphic; it just lives in the separate `PieceRules` classes rather than in
+the board (DESIGN decision 6).
+
+`Board::applyMove` does the mechanical work of a move and asks no questions —
+the caller has already decided the move is legal. It is the one place that
+knows a castle also moves a rook, that a pawn captured en passant is not on the
+square the capturer lands on, and that a promoting pawn is replaced. Having
+exactly one such place is what lets the legality test and the real move share
+code instead of drifting apart.
+
+**The tricky part:** the castling rights. A right is lost when the king moves,
+when the rook moves, *and* when the rook is captured where it stands — and that
+last one is easy to forget, because nothing about the move looks like castling.
+All three collapse into one test: if a move's from-square or to-square is a
+corner, that corner's right is gone. Either the rook left it or the rook died
+on it; either way the rook that started there is no longer there.
+
+The en passant target is reset at the top of `applyMove` before anything else
+runs, so it survives exactly one move — which is the whole rule (§35).

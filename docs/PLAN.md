@@ -11,7 +11,7 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 
 ## Phase 1 — chess rules, in `common/` (§26-39)
 
-- [ ] Board and piece representation, per DESIGN.md §1
+- [x] Board and piece representation, per DESIGN.md §1
 - [ ] Legal movement for each piece type (§26)
 - [ ] Captures; cannot capture own piece (§27)
 - [ ] Blocked paths, per piece type (§28)
