@@ -334,6 +334,27 @@ wording matters.
 - Server prints meaningful status messages to the console.
 - Disconnections must never crash the Server or affect other games.
 
+## Leave no traces in shippable files
+
+Everything that ships is the student's work and must read that way. In any
+source file, the README, or a commit message:
+
+- **Never** mention Claude, an AI, an assistant, a model, or a tool, and never
+  write "generated", "auto-generated" or a co-author trailer.
+- No commented-out code, no dead code, no debug `cout` left behind, and no
+  `// TODO` / `// FIXME` / `// HACK`.
+- No placeholder or scratch files. Delete `client/.gitkeep` and
+  `server/.gitkeep` once those folders hold real sources — they exist only so
+  git tracked the empty directories.
+- No file that nothing uses. If a header or source stops being needed, delete
+  it rather than leaving it in the tree.
+- Comments explain the chess or the protocol, never the process of writing the
+  code. `// pawns may capture en passant only immediately after the double
+  step` is useful; `// added this to fix the build` is noise.
+
+This is about the submitted artifact, not secrecy — `CLAUDE.md`, `docs/` and the
+git history stay as they are, and they are excluded from the zip.
+
 ## Submission
 
 - Zip named `<ID>.zip` containing all source, `ProvidedGUI/`, `client.exe`,
