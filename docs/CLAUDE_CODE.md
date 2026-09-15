@@ -30,6 +30,23 @@ opposite of what you want here.
 **Plan** mode is worth knowing about for later: it describes what it intends to
 do and waits. Useful if you want to see the approach before a big phase.
 
+## 2b. Model
+
+Default to **Opus, Extra effort** (click the model name at the bottom of the
+prompt box). This project is mostly judgement, not typing, and the phases where
+that matters most are:
+
+- **Phase 1** — the rules engine. A subtle bug here is inherited by every phase
+  above it.
+- **Phase 4** — the §22-24 online flow and concurrent games.
+- **Phase 6** — `const` correctness, ownership, RAII: ten graded requirements
+  that are read rather than run.
+
+If usage becomes the limiting factor, drop to **Sonnet** for mechanical
+stretches — console menus, boilerplate, fixing compile errors — and switch back
+to Opus for the three phases above. Don't run the whole project on Sonnet to
+save usage; those three phases are where the marks are.
+
 ## 3. The prompts you actually need
 
 **There is one prompt. Use it every time** — first session, next day, after
