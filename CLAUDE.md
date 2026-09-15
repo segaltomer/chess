@@ -212,6 +212,19 @@ Only stop for these, and nothing else:
 Tests, builds, fixes and commits all proceed without asking. Explanations are
 written down (below), not delivered as questions.
 
+**When you do stop and ask, write the question so a third party could answer
+it.** The student may take it to someone else to think through, so a question
+that assumes the conversation so far is useless to them. Include, briefly:
+
+- what you are trying to do, and which requirement drives it;
+- the options you see, with the trade-off of each;
+- which one you would pick and why, so an answer of "go with yours" works;
+- what it costs to change your mind later.
+
+Say plainly whether it blocks you. If it doesn't, say what you are doing
+meanwhile — never sit idle waiting for an answer when there is other work in
+`docs/PLAN.md` you could be doing.
+
 ### Efficiency yes, shortcuts no
 
 Autonomy means "don't stop to ask", not "get it done quickly". There is no time
