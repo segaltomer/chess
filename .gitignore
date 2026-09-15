@@ -1,0 +1,17 @@
+# Build output
+*.exe
+*.dll
+*.o
+*.a
+build/
+
+# Chess engine binary (shipped with the submission, not tracked here)
+stockfish*
+
+# Local editor config, AI briefing, one-off environment setup
+.vscode/
+CLAUDE.md
+docs/
+setup_chess.bat
+setup_log.txt
+setup_done.marker
