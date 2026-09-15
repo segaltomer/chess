@@ -82,3 +82,44 @@ on it; either way the rook that started there is no longer there.
 
 The en passant target is reset at the top of `applyMove` before anything else
 runs, so it survives exactly one move — which is the whole rule (§35).
+
+---
+
+## How each piece moves · `common/PieceRules` · §26-28, §36
+
+`PieceRules` is an abstract base with one question per method: "from this
+square, on this board, as this colour, what moves could you make?" and "do you
+attack this square?". There is one instance per piece type, handed out by
+`rulesFor(PieceType)`. The objects hold no position and no colour — everything
+they need arrives as arguments — so one shared instance of each serves the
+whole program, and the board can stay a plain array of values.
+
+Three subclasses would have been six near-identical files, so the shared shapes
+are factored out. `SlidingPieceRules` walks a ray until it leaves the board or
+meets a piece; bishop, rook and queen are then one constructor each, differing
+only in their direction list. `SteppingPieceRules` takes each offset once;
+knight and king are one constructor each. Only `PawnRules` is written out in
+full, because the pawn is the one piece that does not capture the way it moves.
+
+**Why `attacksSquare` exists separately from move generation.** It is tempting
+to define "X attacks square S" as "X has a move to S", and for five pieces that
+works. It is wrong for the pawn: a pawn moves straight ahead but captures
+diagonally, so that definition would say a pawn attacks the empty square in
+front of it, and a king would be reported as unable to stand next to an enemy
+pawn's push square while happily walking onto the diagonal that really is
+attacked. Check detection is built on `attacksSquare`, so getting this wrong
+would mean wrong answers about check in exactly the positions that matter.
+
+**The tricky part:** pseudo-legal versus legal. These functions deliberately
+generate moves that leave your own king in check, which §31 forbids. They have
+to. Deciding "does this move leave me in check?" means asking whether the enemy
+could capture my king, which is a question about enemy moves — so if move
+generation filtered for check, it would have to call itself to answer. Cutting
+it in two breaks the loop: `PieceRules` generates freely, `Rules` filters
+afterwards by playing the move on a copy of the board and looking.
+
+Promotion is handled here too: when a pawn's move lands on the far rank, the
+generator emits the same from/to square four times, once per piece it could
+become (§36). Making the promotion part of the move means the rest of the
+engine never needs a special case for it — a promotion is just a move that
+happens to carry a piece type.
