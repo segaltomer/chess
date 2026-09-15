@@ -32,19 +32,17 @@ do and waits. Useful if you want to see the approach before a big phase.
 
 ## 3. The prompts you actually need
 
-**Starting for the first time:**
-
-```
-Read CLAUDE.md and docs/PLAN.md, then start Phase 1, one item at a time.
-```
-
-**Every time after that** — new session, next day, after usage runs out:
+**There is one prompt. Use it every time** — first session, next day, after
+usage runs out:
 
 ```
 Read CLAUDE.md and docs/STATUS.md, then continue.
 ```
 
-That's the only one you need to remember. It reorients from the files.
+That's it. `STATUS.md` always says what's next, so this works from a standing
+start and from the middle of a phase. Everything else — the build order, the
+design, committing, pushing, writing the notes and the revision sheet — is
+already in `CLAUDE.md` and happens without you asking.
 
 **When something is broken** — say what you saw, not that it's broken:
 
@@ -101,8 +99,8 @@ credentials:
    graded project is a plagiarism problem waiting to happen — both for you and
    for whoever copies it.
 
-Then, in Claude Code: **"push to the remote after every commit from now on."**
-A backup you have to remember to make is not a backup.
+Done — the repo is published and private. Pushing after every commit is
+already in `CLAUDE.md`, so it happens on its own.
 
 ### What is and isn't backed up
 

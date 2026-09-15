@@ -161,9 +161,10 @@ Keeping history useful is part of your job here, not an afterthought.
 - **Before each phase boundary**, check `git status` is clean and mention where
   things stand.
 
-Not set up, and not yours to set up: there is no remote. If the student wants
-off-machine backup or a GitHub repo, they create it and authenticate — you
-cannot enter credentials. Once a remote exists, push after each phase.
+- **Push after every commit.** A private GitHub remote exists and is the
+  off-machine backup. `git push` after each commit, without being asked. If a
+  push fails, say so once and carry on committing locally — never stop the work
+  over it, and never try to authenticate.
 
 ## Resuming after an interrupted session
 
