@@ -177,3 +177,92 @@ one. The check runs after the turn has already changed hands, so the player who
 just moved is the winner. Getting this backwards reports every mate as a win
 for the wrong colour, and it is easy to miss, because the game does end
 correctly — only the name on it is wrong.
+
+---
+
+## Phase 2 — the Client, the connection and the Local Game
+
+**Why was the Server written before the Client's menu, when the menu has
+nothing to do with the Server?**
+Because §8 says the main menu is reachable only after a successful connection.
+That makes the connection a gate in front of everything else in the Client, so
+with no server to connect to, none of the Client could be reached to be tested
+— not even Local Game, which never speaks to the Server at all. The server
+built at that point does only what §11 needs: listen, accept, and print where
+it is listening.
+
+**What does the Server print when it starts, and why two addresses?**
+The port, and two addresses: `127.0.0.1` for a Client on the same machine, and
+the machine's LAN address for a Client on another. §11 requires the Server to
+report where it is listening and §25 requires play between two machines on one
+network — and a player cannot type an address nobody has told them.
+
+**How does the connection screen handle a mistake, and what are the three
+kinds?** §9 wants a clear message and §10 wants a way forward, so after any
+failure the screen offers: try again, change the address, change the port, or
+exit. The three failures are caught in three different places:
+
+- a bad address is caught the moment it is typed, by trying to resolve it
+  there — otherwise a typo looks exactly like the server being switched off;
+- a bad port is caught by the number reader, which refuses letters, blanks,
+  out-of-range values and trailing rubbish;
+- nothing answering is caught by the attempt itself, and the message lists
+  what to check.
+
+**What is the trap with reading a number from the console?**
+`std::stoi("53000abc")` returns 53000 and silently ignores the rest, so a typo
+passes as a valid port. The reader checks that the number consumed the *whole*
+line.
+
+There is a second trap: bad input and the input stream *ending* have to be
+told apart. Bad input should be asked again; an ended stream must not be, or
+the program spins at full processor asking a stream that can never answer.
+That happens for real when the console window is closed.
+
+**Something subtle: why is typing the port into the IP box a problem?**
+Because it does not look like an error. Winsock reads a bare number as a packed
+32-bit address, so resolving "53000" succeeds and gives 0.0.207.8. The player is
+then told that address did not answer — true, and useless. It is the easiest
+mistake to make on that screen, so an all-digits address is refused by name.
+
+**In the Local Game, how does a click on the board become a move?**
+The GUI reports a click as a row and a column, with row 0 meaning rank 8 and
+column 0 meaning file a. The engine numbers its 64 squares the same way, so the
+conversion is `row * 8 + col` and nothing more. That was the reason for adopting
+the GUI's indexing in the first place: there is no conversion layer to get
+wrong, and no way for the board to come out flipped.
+
+**What happens when a player tries an illegal move?**
+Nothing — and nothing needs to. `makeMove` checks the move first and changes
+nothing at all unless it was legal, so the board is redrawn from a position
+that never changed and the piece simply appears not to have moved. There is no
+"undo" step, because nothing was ever done.
+
+**Why is resigning two steps rather than one?**
+§54-55. The GUI reports only that the Resign button was clicked — it decides
+nothing. Our code responds by showing the confirmation dialog, and the player
+does not actually resign until `ResignConfirmed` arrives. `ResignCancelled`
+does nothing at all and the game carries on.
+
+**Why does the Local Game's draw dialog name both colours?**
+Because both players are at the same screen. In an online game the offer
+appears on the opponent's own machine and there is no doubt who is being asked;
+here, "Opponent offers a draw" would not say which of the two people sitting
+there should answer. So it reads "White offers a draw. Black, do you accept?"
+(§49).
+
+**Why is there a flag for having shown the game-over summary?**
+Because the summary's close button hides the overlay and reports no event at
+all. If the result were shown whenever the game is over, it would be put back
+on the very next frame and could never be dismissed. Showing it once, then
+disabling board input and hiding the Offer Draw button, leaves the final
+position readable but untouchable.
+
+**A program that builds and links can still fail to start. How?**
+A missing DLL. `server.exe` built cleanly and then died instantly with no
+message at all, exit code `0xC0000135` — Windows kills a process for a missing
+DLL *before* `main` runs, so there is nothing on the console and the symptom
+looks like a crash in code that has not executed. The cause was that the
+project's runtime DLLs had been collected from the GUI example, which does no
+networking, so `libsfml-network-3.dll` was never among them. There are 19, and
+they are collected from `client.exe` and `server.exe`.
