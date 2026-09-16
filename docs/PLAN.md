@@ -21,7 +21,7 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 - [x] Checkmate (§32)
 - [x] Stalemate (§33)
 - [x] Castling, all conditions (§34)
-- [ ] En passant (§35)
+- [x] En passant (§35)
 - [ ] Promotion, choice of Q/R/B/N (§36)
 - [ ] Game result + reason exposed for the GUI (§39)
 

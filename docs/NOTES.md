@@ -222,3 +222,37 @@ queen's side moves the rook from a1 across b1, c1 and d1, so all three must be
 empty — but the king only goes e1 → d1 → c1, so b1 may be attacked and the
 castle is still legal. A single loop over "the squares between" would wrongly
 forbid it. There is a test for exactly this case.
+
+---
+
+## En passant · `common/PieceRules` · §35
+
+Adding the rule took six lines, because the two halves were already in place
+from earlier commits. `Board` sets the target square whenever a pawn double
+steps and clears it at the start of every following move, so the right expires
+after exactly one move on its own. `Board::applyMove` already knew that a pawn
+landing on that square captures a pawn standing *beside* it rather than on it.
+All that was missing was `PawnRules::appendCaptures` offering the move: the
+diagonal square is a legal capture if it holds an enemy piece **or** if it is
+the en passant target.
+
+It needs no test for whose pawn it is. The target is cleared on every move, so
+the only one that can still be set was created by the opponent's last move, and
+therefore belongs to the player now choosing.
+
+**The tricky part** is the one case that catches out most hand-written engines,
+and it is worth being able to describe: en passant is the only move that takes
+*two* pieces off one rank at once — the capturing pawn leaves and the captured
+pawn vanishes, from the same rank. So it can expose your own king along that
+rank to a rook or queen, in a way no other capture can. The engine gets this
+right for free, because legality is tested by playing the move on a copy and
+looking at the resulting position, and `applyMove` removes the captured pawn
+before that look. Nothing special was written for it. There is a test, and the
+"endgame" position in the perft suite exists specifically to catch engines that
+get it wrong.
+
+**Verification.** With en passant in place the whole standard perft suite
+became meaningful and all 26 cases pass — about 15 million positions across six
+positions chosen by engine authors to be nasty. That is the evidence that
+§26-36 are right in general and not merely in the cases we thought to check:
+start position to depth 5 is 4,865,609, Kiwipete to depth 4 is 4,085,603.

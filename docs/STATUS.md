@@ -7,30 +7,33 @@ of the last one can read this and know exactly where things stand.
 
 **Phase:** 1 — chess rules in `common/` (§26-39)
 
-**In progress:** nothing. Items 1-10 are committed.
+**In progress:** nothing. Items 1-11 are committed.
 
-**Last completed:** Phase 1 item 10, castling with all six conditions (§34),
-generated in `common/Rules.cpp`.
+**Last completed:** Phase 1 item 11, en passant (§35), in
+`common/PieceRules.cpp`.
 
-Verified so far: perft matches the published counts for the start position at
-depths 1-4 (20 / 400 / 8,902 / 197,281) and for all five standard suite
-positions at depth 1, including Kiwipete's 48 — which contains both castles;
-31 assertions on turn order, check, pins and FEN; 40 on checkmate and
-stalemate; 37 on castling, one per condition in both directions plus the
-b1-may-be-attacked case and the resulting piece placement for both colours.
+**The rules engine is now verified against the full standard perft suite** —
+all 26 cases pass, about 15 million positions across the six positions chess
+engine authors use to catch each other's bugs. Start position to depth 5 is
+4,865,609; Kiwipete to depth 4 is 4,085,603. This is the main correctness
+evidence for §26-36 and it should be re-run after any change to `common/`.
+
+Alongside it: 31 assertions on turn order, check, pins and FEN; 40 on checkmate
+and stalemate; 37 on castling; 21 on en passant including the capture that is
+illegal because it would expose your own king along the rank.
 
 **Files mid-edit:** none. Working tree clean.
 
-**Next step:** Phase 1 item 11, en passant (§35). `Board` already performs the
-capture and already sets and clears the target square; what is missing is
-`PawnRules::appendCaptures` offering the move when `board.enPassantTarget()` is
-the square diagonally ahead. That is about six lines.
+**Next step:** Phase 1 item 12, promotion (§36). The rules engine already
+generates all four choices — that is what makes the "promotions" perft position
+come out right at 422,333. What is missing is the one method the GUI will need
+in Phase 2: `ChessGame::needsPromotionChoice(from, to)`, so the Client knows to
+show `showPromotionDialog` and wait for the answer before completing the move.
 
-With it the whole standard perft suite becomes meaningful, so the same commit
-should extend `tests/perft_main.cpp` to the full depths — start position to
-depth 5 (4,865,609), Kiwipete to 4 (4,085,603), and the other three to 4 or 5.
-That is the real proof the rules engine is right; expect it to take a minute or
-so to run.
+Then item 13, the game result and reason for the GUI (§39), which also brings
+in resignation (§37) and draw by agreement (§38). That finishes Phase 1, and
+the phase boundary means appending question-and-answer entries to
+`docs/REVISION.md`.
 
 **Deliberately not done yet:** castling and en passant *generation* (items 10
 and 11 — `Board` already performs both, nothing yet offers them as moves), and

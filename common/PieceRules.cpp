@@ -227,7 +227,19 @@ void PawnRules::appendCaptures(const Board& board, int fromSquare, Color colour,
         const Piece target = board.pieceAt(targetSquare);
 
         const bool isEnemyPiece = !target.isEmpty() && (target.colour != colour);
-        if (isEnemyPiece) {
+
+        // §35: the en passant target is the square a pawn skipped over when it
+        // double-stepped last move. That square is empty — the pawn being
+        // captured is beside us rather than on it — which makes this the only
+        // capture in chess that lands on an empty square.
+        //
+        // No colour test is needed. Board clears the target on every move, so
+        // the only target that can still be set belongs to the double step the
+        // opponent has just played.
+        const bool isEnPassantCapture =
+            target.isEmpty() && (targetSquare == board.enPassantTarget());
+
+        if (isEnemyPiece || isEnPassantCapture) {
             appendMoveOrPromotions(fromSquare, targetSquare, colour, moves);
         }
     }

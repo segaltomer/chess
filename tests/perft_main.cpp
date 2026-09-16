@@ -116,18 +116,16 @@ void divide(const std::string& fen, int depth) {
     std::cout << "\nmoves: " << moves.size() << "\nnodes: " << total << "\n";
 }
 
-// The published positions this engine is currently checked against.
+// The standard perft suite. These six positions and their counts are the ones
+// chess engine authors have checked against each other for decades, and they
+// were chosen to be nasty: between them they cover pins along every line,
+// discovered check, castling out of and through check, castling rights lost by
+// a rook being captured on its corner, promotion including under-promotion,
+// and the en passant capture that is illegal because taking removes two pawns
+// from one rank and exposes the king to a rook along it.
 //
-// From the starting position, no castling is reachable within four plies and
-// no en passant capture before the fifth, so those four depths test movement,
-// blocking, captures, check and the ban on moving into check without depending
-// on either special move.
-//
-// The other five are the standard perft suite, at depth 1 for now. Each has
-// "-" in its en passant field, so depth 1 cannot involve an en passant capture
-// however crowded the position is — while Kiwipete and the crowded middlegame
-// both offer castling at depth 1, so those counts do exercise it. The deeper
-// levels go in once en passant is generated.
+// Matching all of them is the evidence that §26-36 are actually implemented,
+// as opposed to implemented in the cases we happened to think of.
 std::vector<PerftCase> suite() {
     const std::string kiwipete =
         "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
@@ -140,16 +138,37 @@ std::vector<PerftCase> suite() {
         "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
 
     return {
-        {"start position",      STARTING_FEN, 1,      20},
-        {"start position",      STARTING_FEN, 2,     400},
-        {"start position",      STARTING_FEN, 3,    8902},
-        {"start position",      STARTING_FEN, 4,  197281},
+        {"start position",      STARTING_FEN, 1,        20},
+        {"start position",      STARTING_FEN, 2,       400},
+        {"start position",      STARTING_FEN, 3,      8902},
+        {"start position",      STARTING_FEN, 4,    197281},
+        {"start position",      STARTING_FEN, 5,   4865609},
 
-        {"kiwipete",            kiwipete,     1,      48},
-        {"endgame",             endgame,      1,      14},
-        {"promotions",          promotions,   1,       6},
-        {"crowded middlegame",  crowded,      1,      44},
-        {"steady state",        steadyState,  1,      46},
+        {"kiwipete",            kiwipete,     1,        48},
+        {"kiwipete",            kiwipete,     2,      2039},
+        {"kiwipete",            kiwipete,     3,     97862},
+        {"kiwipete",            kiwipete,     4,   4085603},
+
+        {"endgame, en passant", endgame,      1,        14},
+        {"endgame, en passant", endgame,      2,       191},
+        {"endgame, en passant", endgame,      3,      2812},
+        {"endgame, en passant", endgame,      4,     43238},
+        {"endgame, en passant", endgame,      5,    674624},
+
+        {"promotions",          promotions,   1,         6},
+        {"promotions",          promotions,   2,       264},
+        {"promotions",          promotions,   3,      9467},
+        {"promotions",          promotions,   4,    422333},
+
+        {"crowded middlegame",  crowded,      1,        44},
+        {"crowded middlegame",  crowded,      2,      1486},
+        {"crowded middlegame",  crowded,      3,     62379},
+        {"crowded middlegame",  crowded,      4,   2103487},
+
+        {"steady state",        steadyState,  1,        46},
+        {"steady state",        steadyState,  2,      2079},
+        {"steady state",        steadyState,  3,     89890},
+        {"steady state",        steadyState,  4,   3894594},
     };
 }
 
