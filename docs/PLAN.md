@@ -84,8 +84,9 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
       and illegal moves both rejected by the Server
 - [x] Client renders server state only, never applies a move locally (§23-24)
 - [x] Resign and draw offers relayed through the Server (§50, §56)
-- [x] Automated protocol test: 67 checks over matchmaking, validation, game
-      isolation, draw offers, resignation, disconnection and malformed input
+- [x] `tests/protocol_test.cpp` — 81 checks over matchmaking, validation, game
+      isolation, draw offers, resignation, disconnection and malformed input.
+      Kept in the repo like perft; needs a running server on the same port.
 - [x] **Confirmed by playing it.** Two clients and one server at once: the game
       plays through both windows correctly.
 - [x] Side-panel captions measured against the GUI's 260px panel and shortened
@@ -97,12 +98,20 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 
 ## Phase 5 — robustness (§64-70)
 
-- [ ] Client disconnect never crashes the Server (§64)
-- [ ] Disconnect handled mid-game, while waiting, and on menu screens (§65)
-- [ ] Opponent notified and game ended/updated on disconnect (§66)
-- [ ] Reject malformed messages and messages wrong for the current state (§67)
-- [ ] Bad user input handled everywhere (§67)
-- [ ] Console status logging for all significant events (§68-70)
+- [x] Client disconnect never crashes the Server (§64) — clients dropped in
+      every state; the Server keeps pairing new ones afterwards
+- [x] Disconnect handled mid-game, while waiting, and on menu screens (§65) —
+      the menu case needed `isServerStillThere`, since a dead TCP connection is
+      only discovered by using it
+- [x] Opponent notified and game ended/updated on disconnect (§66) — worded as
+      "disconnected", not "resigned"
+- [x] Reject malformed messages and messages wrong for the current state (§67) —
+      both directions; unknown type, empty, truncated, server-only messages from
+      a client, and six state mismatches
+- [x] Bad user input handled everywhere (§67) — every console prompt driven with
+      rubbish; each refuses with a specific message and re-asks
+- [x] Console status logging for all significant events (§68-70) — checked
+      against §69's list item by item
 
 ## Phase 6 — quality pass (§71-80)
 
@@ -119,6 +128,12 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 
 ## Phase 7 — submission (§82-84)
 
+- [ ] **§25 — TEST ON A SECOND COMPUTER. The student asked to be reminded of
+      this at the end.** Run `server.exe` and one `client.exe` here, and a
+      second `client.exe` on another machine on the same network, connecting to
+      the LAN address the server prints. It is the only requirement that cannot
+      be checked on one machine, and it is graded. Everything else about online
+      play is already verified.
 - [ ] README covers every item in §83
 - [ ] `client.exe`, `server.exe`, Stockfish binary, and the 19 DLLs present
 - [ ] No absolute paths anywhere in the source
@@ -154,11 +169,12 @@ stockfish/                stockfish.exe + Copying.txt (GPL - required)
 - `.git/` — the repo. Keep it on disk, keep pushing it; it just isn't submitted.
 - `.vscode/`, `.claude/` — editor and tool local state.
 - `CLAUDE.md`, `docs/` — our working notes. They stay in the repo.
-- `tests/` — the perft harness that verifies the rules engine, and the Bot
-  match that verifies the difficulty levels. Not Client or Server source, each
-  has its own `main()`, and neither is picked up by the `common/*.cpp`,
-  `client/*.cpp` or `server/*.cpp` build commands. They stay in the repo
-  because they are how a rules or difficulty change gets re-checked.
+- `tests/` — the perft harness that verifies the rules engine, the Bot match
+  that verifies the difficulty levels, and the protocol test that verifies the
+  Server. Not Client or Server source, each has its own `main()`, and none is
+  picked up by the `common/*.cpp`, `client/*.cpp` or `server/*.cpp` build
+  commands. They stay in the repo because they are how a change to the rules,
+  the difficulty levels or the protocol gets re-checked.
 - `.gitignore` — meaningless without `.git/`.
 - `gui_example.exe` — his demo's binary, not asked for.
 - `*.o`, `*.a`, any build intermediates.

@@ -242,9 +242,9 @@ void OnlineGame::handleGameState(sf::Packet& packet) {
         return;
     }
 
-    // §59 is enforced on the Server, but a Client that is in one game should
-    // still not draw a position belonging to another.
-    if (hasGameStarted_ && message.gameId != gameId_) {
+    // §59 is enforced on the Server, but a Client in one game should still not
+    // draw a position belonging to another.
+    if (message.gameId != gameId_) {
         return;
     }
 
@@ -339,7 +339,24 @@ void OnlineGame::handleServerMessage(sf::Packet& packet) {
         return;
     }
 
-    switch (static_cast<MessageType>(rawType)) {
+    const MessageType type = static_cast<MessageType>(rawType);
+
+    // §67: a message can be perfectly well formed and still be wrong for the
+    // moment it arrived in. Everything below the first two only means anything
+    // once this Client is in a game, and a second GameStarted would mean the
+    // Server thinks it has paired us twice. Neither is acted on.
+    const bool isAboutAGameInProgress =
+        (type != MessageType::Waiting && type != MessageType::GameStarted);
+
+    if (isAboutAGameInProgress && !hasGameStarted_) {
+        return;
+    }
+
+    if (type == MessageType::GameStarted && hasGameStarted_) {
+        return;
+    }
+
+    switch (type) {
         case MessageType::Waiting:
             // §40: no opponent yet. The window already says so, so there is
             // nothing to change.

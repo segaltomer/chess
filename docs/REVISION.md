@@ -470,12 +470,43 @@ move", "Not your turn", "Game already over" and "Not your game", each measured
 against that width in the GUI's own font and size rather than guessed at. They
 are worded on the Server, so they read correctly in its log too.
 
+**Your client is sitting on the main menu and the server dies. How does it find
+out?**
+By asking, because it cannot be told. A TCP connection that has gone is only
+discovered by trying to use it — the "connected" flag is just the result of the
+last read or write, so it stays true indefinitely after a server quietly
+disappears. Nothing on the menu talks to the server, so `isServerStillThere`
+does one non-blocking read before the menu is shown and again if Online is
+chosen. The loss is reported once and the program carries on: Local and Bot
+games never needed the server, and quitting would remove two working modes to
+punish the loss of a third.
+
+**Is there anything a hostile client could still do to your server?**
+Yes, and it is a deliberate trade-off rather than an oversight. The server's
+sends are blocking, so a client that stopped reading but kept its socket open
+could stall the single thread. Fixing it properly means an output queue per
+client and non-blocking writes. What §64 actually asks — that a client
+*disconnecting* never crashes the server or disturbs other games — is met, since
+a dropped socket fails the send immediately instead of blocking, and that is
+tested. The simpler design was chosen knowingly.
+
+**§67 talks about invalid messages. Is that just checking the format?**
+No, there are two separate problems. A message can be malformed — an unknown
+type byte, a missing or truncated body — which is caught by `isKnownMessageType`
+and by checking that every field actually read. But a message can also be
+perfectly well formed and still be wrong for the moment it arrived in: a move
+for a game you are not in, an answer to a draw offer nobody made, answering your
+own offer, a second offer while one is outstanding, asking for a new game while
+already playing. Those need the current state to detect, and both ends check
+them.
+
 **How was any of this tested without two people and two computers?**
 With a program that connects as several clients at once and checks the Server's
-answers — 67 checks in all. It covers matchmaking and the waiting state, moves
+answers — 81 checks in all. It covers matchmaking and the waiting state, moves
 played out of turn and moves that are illegal, two games running at once with no
 cross-talk, a client aiming a move at a game it is not in, draw offers accepted
 and declined, resignation, a client disconnecting mid-game, and four kinds of
 malformed message, after which the Server is checked to still be pairing new
-clients. What it cannot check is the GUI wiring and §25, two machines on one
-network; those need hands.
+clients. The console prompts were driven separately with deliberate rubbish at
+every one. What it cannot check is §25, two machines on one network; that needs
+a second computer.

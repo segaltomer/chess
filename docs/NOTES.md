@@ -704,3 +704,53 @@ fire off a second move believing the first has happened. And the promotion
 dialog is decided from the picture on screen — is that my pawn, is it landing on
 the far rank — which is display logic, not a rules decision: if the Client
 guesses wrong the Server rejects the move anyway.
+
+
+## Robustness · `client/main.cpp`, `client/OnlineGame`, `server/` · §64-70
+
+Most of this was already standing, because online play could not be written
+without it. What follows is what the pass over §64-70 actually added or settled.
+
+**You cannot tell a TCP connection has died without using it.** This is the idea
+behind `isServerStillThere`. `ServerConnection::isConnected()` is not a live
+fact — it is the result of the *last* attempt to read or write, so it stays true
+indefinitely after a Server has quietly gone away. §65 asks for disconnection to
+be handled on the system screens as well as in a game, and the menu is exactly
+where nothing is talking to the Server, so nothing would ever find out. One
+non-blocking read settles it, and it is asked both before the menu is shown and
+again when Online is chosen.
+
+The reply to a lost connection is deliberately *not* to quit. §8 makes the menu
+conditional on having connected, which this Client did; and Local and Bot games
+never needed the Server at all, so shutting the program down would remove two
+working modes to punish the loss of a third. It says so once and carries on.
+
+There is a race here that cannot be designed away: the Server can die in the
+moment between the check and the board window opening. That is handled rather
+than prevented — the window opens and immediately shows "Lost connection to the
+server" as the game's result. Both orderings are honest and neither hangs.
+
+**§67 is two different problems.** A message can be malformed — a type byte that
+is not ours, a body that is missing or truncated — and it can be perfectly well
+formed but wrong for the moment it arrived in. The first is caught by
+`isKnownMessageType` and by checking that every field actually read. The second
+needs state: the Server refuses a move for a game the sender is not in, a draw
+answer where no offer stands, a player answering their own offer, a second offer
+while one is outstanding, a search from a client already playing. The Client
+does the same in reverse, ignoring anything about a game before it has been told
+one started, and a second `GameStarted` if it already has one.
+
+**A known trade-off, worth being able to defend.** The Server's sends are
+blocking. A client that stopped reading but kept its socket open could therefore
+stall the single thread. Fixing that properly means an output queue per client
+and non-blocking writes, which is a real amount of machinery for a case that
+needs a deliberately hostile client. What §64 actually requires — that a client
+*disconnecting* never brings the Server down or disturbs other games — is met
+and tested, because a dropped socket fails the send immediately rather than
+blocking. The simpler version was chosen knowingly, not by accident.
+
+**Testing.** 81 automated checks against a running Server, plus the console
+prompts driven with deliberate rubbish at every one: a bad address, an address
+where a port belongs, a port out of range, words where numbers belong, and menu
+choices above, below and outside the range. Every one is refused with a specific
+message and re-asked, and nothing is left in a bad state.

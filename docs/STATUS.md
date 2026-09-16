@@ -5,9 +5,8 @@ of the last one can read this and know exactly where things stand.
 
 ---
 
-**Phase:** 4 — the Server and Online play (§21-25, §40-42, §50, §56-63).
-**Code complete and verified by an automated protocol test; awaiting the
-student's two-client play-test.** Phases 1-3 are done.
+**Phase:** 5 — robustness (§64-70). **Done.** Phases 1-4 are done.
+**Next up: Phase 6, the quality pass (§71-80).**
 
 **In progress:** nothing.
 
@@ -76,8 +75,8 @@ with both Accept and Decline, and closing the window mid-game. All correct.
 | `server/Server.h/.cpp` | sockets, dispatch, the §59 guard, console logging (§57-60, §68-70) |
 | `client/OnlineGame.h/.cpp` | draws server state, sends requests, owns no rules engine (§23-24) |
 
-`tests/perft_main.cpp` and `tests/bot_match.cpp` are the verification harnesses.
-Neither ships.
+`tests/perft_main.cpp`, `tests/bot_match.cpp` and `tests/protocol_test.cpp` are
+the verification harnesses. None of them ships.
 
 ## Verification status
 
@@ -124,14 +123,37 @@ and disconnecting in any order.
   open, `stockfish.exe` appears in Task Manager's **Details** tab with
   `client.exe` as its parent process.
 
-**Online play was verified by an automated protocol test** — a scratch program
-that connects as several clients at once and checks the Server's answers. 67
-checks, all passing, over: matchmaking and the waiting state; colour assignment;
-moves played out of turn and moves that are simply illegal, both rejected by the
-Server; two games running at once with no cross-talk; a client aiming a move at
-a game it is not in; draw offers accepted and declined; resignation; a client
-disconnecting mid-game; and malformed input of four kinds, after which the
-Server still pairs new clients.
+**Phase 5 — robustness (§64-70).** Complete. Most of it was already standing,
+since online play could not be written without it; the pass added the menu-level
+disconnection check (§65), tightened the Client against messages that do not fit
+its current state (§67), and verified §69's list of logged events item by item.
+
+**Online play and robustness were verified by an automated protocol test** — a
+scratch program that connects as several clients at once and checks the Server's
+answers. **81 checks, all passing**, over: matchmaking and the waiting state;
+colour assignment; moves played out of turn and moves that are simply illegal,
+both rejected by the Server; two games running at once with no cross-talk; a
+client aiming a move at a game it is not in; draw offers accepted and declined;
+resignation; a client disconnecting mid-game and a client disconnecting while
+waiting to be paired; six messages that are well formed but wrong for the
+current state; and malformed input of four kinds, after which the Server still
+pairs new clients.
+
+Separately, every console prompt was driven with deliberate rubbish — a bad
+address, an address where a port belongs, a port out of range, words where
+numbers belong, and menu choices above, below and outside the range. Each is
+refused with a specific message and re-asked.
+
+It is kept, as `tests/protocol_test.cpp`, alongside perft and the Bot match.
+Unlike those two it needs a Server to talk to, so it takes two windows:
+
+    g++ -std=c++17 -O2 -Icommon common/*.cpp tests/protocol_test.cpp \
+        -o protocol_test.exe -lsfml-network -lsfml-system
+    ./server.exe 53100            one window
+    ./protocol_test.exe 53100     another
+
+It exits 0 only if all 81 checks passed. Re-run it after any change to the
+protocol, the Server, or `client/OnlineGame`.
 
 ## How to test it — two clients and one server
 

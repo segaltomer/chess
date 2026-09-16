@@ -14,8 +14,7 @@
 // and it is excluded from the submission zip.
 //
 // Build and run from the project root:
-//   g++ -std=c++17 common/*.cpp tests/perft_main.cpp -Icommon -o perft.exe \
-//       -lsfml-network -lsfml-system
+//   g++ -std=c++17 common/*.cpp tests/perft_main.cpp -Icommon -o perft.exe -lsfml-network -lsfml-system
 //   ./perft.exe            run the suite
 //   ./perft.exe divide "<fen>" <depth>    break one position down by move
 

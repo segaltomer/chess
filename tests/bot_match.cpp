@@ -17,9 +17,7 @@
 // and it is excluded from the submission zip.
 //
 // Build and run from the project root:
-//   g++ -std=c++17 -O2 -Icommon -Iclient common/*.cpp client/StockfishEngine.cpp \
-//       client/BotDifficulty.cpp client/ConsoleInput.cpp tests/bot_match.cpp \
-//       -o bot_match.exe -lsfml-network -lsfml-system
+//   g++ -std=c++17 -O2 -Icommon -Iclient common/*.cpp client/StockfishEngine.cpp client/BotDifficulty.cpp client/ConsoleInput.cpp tests/bot_match.cpp -o bot_match.exe -lsfml-network -lsfml-system
 //   ./bot_match.exe
 //
 // It deliberately calls the shipped settingsFor(), so it tests the difficulty

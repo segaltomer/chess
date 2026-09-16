@@ -134,6 +134,23 @@ moving first. The stronger level wins all six games by checkmate. Every engine
 move is played through `ChessGame::makeMove`, so the run also confirms our own
 rules accept everything a real engine produces.
 
+### Verifying the server and the protocol
+
+This one connects as several clients at once and checks the server's replies,
+which is how the things that cannot be seen by playing a single game get
+tested: two games running independently, a client refused when it asks about
+somebody else's game, moves rejected on the server, disconnections, and
+malformed messages. It needs a server to talk to, so start one first:
+
+```bash
+g++ -std=c++17 -O2 -Icommon common/*.cpp tests/protocol_test.cpp \
+    -o protocol_test.exe -lsfml-network -lsfml-system
+./server.exe 53100            # one window
+./protocol_test.exe 53100     # another
+```
+
+81 checks, all passing. It exits 0 only if every one of them did.
+
 ## Stockfish
 
 Stockfish 19 (release tag `sf_19`), Windows x86-64 **universal** build, in
@@ -202,7 +219,7 @@ squares instead of pieces.
 ├── common/               chess rules, shared by both programs
 ├── client/               console screens, GUI wiring, Bot, client networking
 ├── server/               server sources
-├── tests/                perft and Bot-match harnesses; not submitted
+├── tests/                perft, Bot-match and protocol harnesses; not submitted
 ├── stockfish/            Stockfish 19 engine + GPL licence
 ├── build_example.bat     supplied
 ├── GUI_USAGE.md          supplied GUI API reference
