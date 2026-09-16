@@ -15,7 +15,12 @@ void logLine(const std::string& message) {
 
 
 Server::Server(unsigned short port) {
-    const sf::Socket::Status status = listener_.listen(port);
+    // §25: listening on Any rather than on the loopback address is what lets a
+    // Client on another machine reach this one. It is SFML's default, but it is
+    // written out because it is the whole of the requirement not to assume that
+    // every Client runs on this computer — a server bound to 127.0.0.1 would
+    // work perfectly in every test done on one machine and fail on two.
+    const sf::Socket::Status status = listener_.listen(port, sf::IpAddress::Any);
 
     if (status != sf::Socket::Status::Done) {
         // Console text stays plain ASCII. The Windows console is not running a

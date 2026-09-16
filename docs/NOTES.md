@@ -799,3 +799,69 @@ because the alternative is a reader assuming it was carelessness.
 DESIGN decision 6. Wrapping `gui_` in a protected accessor that returns a
 mutable reference would give a subclass identical power while looking more
 encapsulated, which is worse than being honest about it.
+
+
+## The final audit · everything · all 89
+
+A deliberate pass over the whole project looking for what was still only
+assumed. What it changed:
+
+**The requirements document was re-read in the original**, not through the
+transcription, because a transcription error would be invisible from inside the
+project. Two things came out of that.
+
+The first is §25. Its full wording says the implementation must not assume every
+Client runs on one computer — and then adds that *during checking it is also
+possible to test using several Clients on the same computer*. So the requirement
+is about the implementation, and testing on one machine is explicitly allowed.
+That is now provable rather than asserted: `netstat` shows the Server listening
+on `0.0.0.0`, not `127.0.0.1`, and `listen(port, sf::IpAddress::Any)` says so in
+the source instead of relying on SFML's default. `127.0.0.1` appears nowhere in
+the code except in printed help text.
+
+The second is §88-89, the two compile commands. They are in the PDF as templates
+with the source files left blank, and they had never been compared against ours
+character by character. They are:
+
+    g++ -std=c++17 ... -o client.exe  -lsfml-graphics -lsfml-window -lsfml-system -lsfml-network
+    g++ -std=c++17 ... -o server.exe  -lsfml-network -lsfml-system
+
+Ours match exactly, including the order of the link flags, and the lecturer's
+own `build_example.bat` uses `-IProvidedGUI` in the same position we do. The
+README's commands were also put on single lines, because a backslash
+continuation works in the MSYS2 shell but not in `cmd` or PowerShell, and his
+own build script is a `cmd` batch file. Both were then pasted into both shells
+to confirm.
+
+**Two gaps in testing were found and closed.** Promotion and checkmate had never
+been exercised *through the Server* — only locally. The protocol test now plays
+a game to checkmate, and marches a pawn to the eighth rank three ways: without
+naming a piece, which must be refused; as a queen; and as a knight, which proves
+the choice is honoured rather than hardcoded. Refusing the first matters more
+than it looks: `Rules::isLegalMove` compares whole moves including the promotion
+field, so a promoting move with no piece named is simply not in the legal list.
+The failure mode is a rejection, never a pawn stranded on the last rank.
+
+**A latent bug in `StockfishEngine`.** Both timeout helpers built their deadline
+from `GetTickCount`, which wraps to zero after about 49 days of uptime; a
+deadline computed across that wrap either expires immediately or never.
+`GetTickCount64` throughout.
+
+**Fuzzing, because crafted bad input only covers what somebody thought of.** The
+protocol test now ends by sending 1,600 random packets from four Clients at
+once, half of them starting with a plausible type byte so the per-message
+parsers are reached and fed nonsense, then dropping two of those Clients
+mid-stream. The Server survives, its memory and handle count are unchanged, and
+it still pairs new Clients and validates real moves afterwards. That is §64 and
+§67 tested rather than reasoned about.
+
+**What was checked and found already correct**, so that it is not re-checked
+later: every one of the GUI's ten event types is handled; the game-over box is
+dismissed by the GUI itself, so `hideGameOver` is not ours to call; the board
+loop cannot spin, because the GUI caps itself at 60 frames a second; the display
+characters are exactly the set `setBoard` documents; the promotion rank
+arithmetic is right for both colours; there is no non-ASCII in any string
+literal, so nothing can arrive on the console as mojibake; and all 56 source and
+documentation files are clean UTF-8 with no BOM. Both programs compile without a
+single warning under `-Wall -Wextra -Wpedantic -Wshadow`, which is stricter than
+anything the grader will use.

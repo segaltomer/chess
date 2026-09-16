@@ -33,9 +33,12 @@
 
 #include <SFML/Network.hpp>
 
+#include <cstdint>
 #include <iostream>
 #include <optional>
+#include <random>
 #include <string>
+#include <vector>
 
 namespace {
 
@@ -180,6 +183,51 @@ bool expectGameOver(TestClient& client, GameOverMessage& over) {
         return false;
     }
     return static_cast<bool>(packet >> over);
+}
+
+// Plays one move that is expected to be accepted, and reads the resulting
+// position from both players. `state` ends up holding the new position.
+bool playAcceptedMove(TestClient& mover, TestClient& waiter, std::int32_t gameId,
+                      const std::string& uci, GameStateMessage& state) {
+    mover.send(moveRequest(gameId, uci));
+
+    return expectGameState(mover, state) && expectGameState(waiter, state);
+}
+
+// Pairs two fresh clients and reads everything the Server sends about the new
+// game, leaving both sockets clean. Returns the game id, or 0 on failure.
+std::int32_t startGame(TestClient& white, TestClient& black, unsigned short port) {
+    if (!white.connect(port) || !black.connect(port)) {
+        return 0;
+    }
+
+    sf::Packet packet;
+    white.send(makeMessage(MessageType::FindGame));
+    if (white.receiveType(packet) != "Waiting") {
+        return 0;
+    }
+
+    black.send(makeMessage(MessageType::FindGame));
+
+    std::int32_t whiteGameId = 0;
+    std::int32_t blackGameId = 0;
+    Color whiteColour = Color::Black;
+    Color blackColour = Color::White;
+
+    if (!expectGameStarted(white, whiteGameId, whiteColour)
+        || !expectGameStarted(black, blackGameId, blackColour)) {
+        return 0;
+    }
+
+    GameStateMessage opening;
+    if (!expectGameState(white, opening) || !expectGameState(black, opening)) {
+        return 0;
+    }
+
+    const bool coloursAreRight =
+        (whiteColour == Color::White && blackColour == Color::Black);
+
+    return (whiteGameId == blackGameId && coloursAreRight) ? whiteGameId : 0;
 }
 
 }   // namespace
@@ -457,6 +505,148 @@ int main(int argc, char* argv[]) {
     Color ninthColour = Color::Black;
     check(expectGameStarted(ninth, ninthGameId, ninthColour),
           "those two are paired normally");
+
+    std::cout << "\n=== a game ending in checkmate (secs 32, 39) ===\n";
+
+    TestClient mateWhite;
+    TestClient mateBlack;
+    const std::int32_t mateGame = startGame(mateWhite, mateBlack, port);
+    check(mateGame != 0, "a game starts for the checkmate test");
+
+    // The fastest mate there is: White opens the diagonal to its own king and
+    // Black's queen arrives on h4.
+    GameStateMessage mateState;
+    check(playAcceptedMove(mateWhite, mateBlack, mateGame, "f2f3", mateState), "1. f3");
+    check(playAcceptedMove(mateBlack, mateWhite, mateGame, "e7e5", mateState), "1... e5");
+    check(playAcceptedMove(mateWhite, mateBlack, mateGame, "g2g4", mateState), "2. g4");
+
+    mateBlack.send(moveRequest(mateGame, "d8h4"));
+
+    GameOverMessage mateOver;
+    check(expectGameState(mateBlack, mateState), "the mating move is confirmed");
+    check(expectGameOver(mateBlack, mateOver), "and the game is declared over");
+    check(mateOver.title == "Black wins!" && mateOver.detail == "Checkmate",
+          "the Server works out checkmate itself and words the result");
+    check(expectGameState(mateWhite, mateState), "the mated player is updated too");
+    check(expectGameOver(mateWhite, mateOver), "and told the same result");
+
+    // sec 67: the game is finished and forgotten, so nothing more is accepted.
+    mateWhite.send(moveRequest(mateGame, "e2e4"));
+    check(mateWhite.receivesNothing(), "a move after checkmate is ignored");
+
+    std::cout << "\n=== promotion through the Server (sec 36) ===\n";
+
+    TestClient promoWhite;
+    TestClient promoBlack;
+    const std::int32_t promoGame = startGame(promoWhite, promoBlack, port);
+    check(promoGame != 0, "a game starts for the promotion test");
+
+    // March the a-pawn up, taking on b7, while Black shuffles on the far side.
+    GameStateMessage promoState;
+    const std::string whitePlan[] = {"a2a4", "a4a5", "a5a6", "a6b7"};
+    const std::string blackPlan[] = {"h7h6", "h6h5", "h5h4", "h4h3"};
+
+    bool marchWorked = true;
+    for (int i = 0; i < 4; ++i) {
+        marchWorked = marchWorked
+            && playAcceptedMove(promoWhite, promoBlack, promoGame, whitePlan[i], promoState)
+            && playAcceptedMove(promoBlack, promoWhite, promoGame, blackPlan[i], promoState);
+    }
+    check(marchWorked, "a pawn reaches the seventh rank");
+
+    // sec 36: a promoting move is not complete without a piece chosen, so this
+    // one must be refused rather than half-applied.
+    promoWhite.send(moveRequest(promoGame, "b7a8"));
+    sf::Packet promoPacket;
+    check(promoWhite.receiveType(promoPacket) == "MoveRejected",
+          "promoting without naming a piece is rejected, not guessed at");
+
+    check(playAcceptedMove(promoWhite, promoBlack, promoGame, "b7a8q", promoState),
+          "the same move with a queen chosen is accepted");
+    check(promoState.board[squareFromName("a8")] == 'Q',
+          "a white queen now stands on a8");
+
+    // The other three choices sec 36 requires are the same path with a
+    // different letter; that the piece asked for is the piece that appears is
+    // what matters, and an under-promotion proves it is not hardcoded.
+    TestClient underWhite;
+    TestClient underBlack;
+    const std::int32_t underGame = startGame(underWhite, underBlack, port);
+    check(underGame != 0, "a game starts for the under-promotion test");
+
+    GameStateMessage underState;
+    bool underMarch = true;
+    for (int i = 0; i < 4; ++i) {
+        underMarch = underMarch
+            && playAcceptedMove(underWhite, underBlack, underGame, whitePlan[i], underState)
+            && playAcceptedMove(underBlack, underWhite, underGame, blackPlan[i], underState);
+    }
+    check(underMarch, "a pawn reaches the seventh rank again");
+
+    check(playAcceptedMove(underWhite, underBlack, underGame, "b7a8n", underState),
+          "promoting to a knight is accepted");
+    check(underState.board[squareFromName("a8")] == 'N',
+          "a white knight stands on a8, so the choice is honoured");
+
+    std::cout << "\n=== random rubbish, in quantity (secs 64, 67) ===\n";
+
+    // The crafted bad messages above cover the cases worth naming. This covers
+    // the ones nobody thought of: random bytes, in bulk, from several clients
+    // at once. Half of them begin with a plausible type byte so that the
+    // Server's per-message parsers are actually reached and fed nonsense,
+    // rather than every packet being turned away at the first check.
+    //
+    // The seed is fixed, so a failure here can be reproduced exactly.
+    {
+        constexpr int FUZZ_CLIENTS = 4;
+        constexpr int PACKETS_EACH = 400;
+
+        std::mt19937 random(12345);
+        std::uniform_int_distribution<int> byteValue(0, 255);
+        std::uniform_int_distribution<int> lengthValue(0, 250);
+        std::uniform_int_distribution<int> typeValue(0, 40);
+
+        std::vector<TestClient> fuzzers(FUZZ_CLIENTS);
+        bool allConnected = true;
+        for (TestClient& fuzzer : fuzzers) {
+            allConnected = allConnected && fuzzer.connect(port);
+        }
+        check(allConnected, "four clients connect to send rubbish");
+
+        for (int round = 0; round < PACKETS_EACH; ++round) {
+            for (TestClient& fuzzer : fuzzers) {
+                sf::Packet rubbish;
+
+                if (round % 2 == 0) {
+                    rubbish << static_cast<std::uint8_t>(typeValue(random));
+                }
+
+                const int length = lengthValue(random);
+                for (int b = 0; b < length; ++b) {
+                    rubbish << static_cast<std::uint8_t>(byteValue(random));
+                }
+
+                fuzzer.send(rubbish);
+            }
+        }
+
+        // Dropped mid-stream, so the Server also has to cope with a client
+        // vanishing while its rubbish is still unread.
+        fuzzers[1].disconnect();
+        fuzzers[3].disconnect();
+
+        sf::sleep(sf::milliseconds(700));
+    }
+
+    TestClient afterWhite;
+    TestClient afterBlack;
+    const std::int32_t afterGame = startGame(afterWhite, afterBlack, port);
+    check(afterGame != 0,
+          "after 1600 malformed packets the Server still pairs new clients");
+
+    GameStateMessage afterState;
+    check(playAcceptedMove(afterWhite, afterBlack, afterGame, "e2e4", afterState),
+          "and still validates and broadcasts a real move");
 
     std::cout << "\nchecks: " << checkCount
               << ", failures: " << failureCount << "\n";

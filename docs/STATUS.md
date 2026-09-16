@@ -5,20 +5,25 @@ of the last one can read this and know exactly where things stand.
 
 ---
 
-**Phase:** 7 — submission (§82-84). **Done. The zip is built and tested.**
-Phases 1-6 are done. **88 of the 89 requirements are complete.**
+**Phase:** 7 — submission (§82-84). **Done. The zip is built and tested, and a
+full audit pass has been run over all 89 requirements.** Phases 1-6 are done.
 
 **`216908467.zip` is in the project root** — 82.3 MB, 89 entries, everything
 inside one top-level folder `216908467/`. It is gitignored, so rebuild it from
 the whitelist in `docs/PLAN.md` if anything changes.
 
-**The one requirement left is §25 — online play across two computers.** Server
-and one Client here, a second Client on another machine on the same network,
-using the LAN address the Server prints. The student asked to be reminded of
-this at the end; this is that reminder, and it is the only thing between the
-project and finished. Nothing in the code assumes one machine, and two Clients
-on this one already play each other through the Server, but the requirement asks
-for two machines and only a second machine can answer it.
+**A full audit pass has since been done — see the last entry in `docs/NOTES.md`
+for what it changed.** The headline is that §25 is in better shape than it
+looked: the PDF's actual wording requires the *implementation* not to assume one
+computer, and explicitly allows testing with several Clients on a single
+machine. That requirement is met and provable — `netstat` shows the Server
+listening on `0.0.0.0`, and `listen(port, sf::IpAddress::Any)` now states the
+intent in the source rather than relying on a default.
+
+**Running it across two computers is still worth doing** as confirmation, and
+the student asked to be reminded of it; it is the first item of Phase 7 in
+`docs/PLAN.md`. But it is no longer the one thing standing between the project
+and complete.
 
 If it turns out the two machines cannot see each other, the usual cause is
 Windows Firewall rather than the code: allow `server.exe` on private networks

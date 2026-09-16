@@ -34,9 +34,7 @@ Run both commands from the project root.
 **Client:**
 
 ```bash
-g++ -std=c++17 common/*.cpp client/*.cpp ProvidedGUI/ChessFrontend.cpp -IProvidedGUI \
-    -o client.exe \
-    -lsfml-graphics -lsfml-window -lsfml-system -lsfml-network
+g++ -std=c++17 common/*.cpp client/*.cpp ProvidedGUI/ChessFrontend.cpp -IProvidedGUI -o client.exe -lsfml-graphics -lsfml-window -lsfml-system -lsfml-network
 ```
 
 **Server:**
@@ -44,6 +42,10 @@ g++ -std=c++17 common/*.cpp client/*.cpp ProvidedGUI/ChessFrontend.cpp -IProvide
 ```bash
 g++ -std=c++17 common/*.cpp server/*.cpp -o server.exe -lsfml-network -lsfml-system
 ```
+
+Each is a single line, so it can be pasted into the MSYS2 UCRT64 shell, `cmd`
+or PowerShell without change. The `*.cpp` wildcards are expanded by g++ itself
+on MinGW, so they work in all three even where the shell does not expand them.
 
 `common/` holds the chess rules and the protocol messages, and is compiled into
 both programs — the rules have to be identical in every mode, and the Server
@@ -235,6 +237,9 @@ g++ -std=c++17 -O2 -Icommon common/*.cpp tests/perft_main.cpp -o perft.exe -lsfm
 ./perft.exe
 ```
 
+(`common/` holds the protocol messages as well as the rules, so anything built
+from `common/*.cpp` links SFML Network even when, as here, it opens no socket.)
+
 All 26 cases pass, about 15 million positions.
 
 **The Bot's difficulty levels**, checked by making them play each other, so the
@@ -260,7 +265,13 @@ g++ -std=c++17 -O2 -Icommon common/*.cpp tests/protocol_test.cpp -o protocol_tes
 ./protocol_test.exe 53100     # another
 ```
 
-81 checks; it exits 0 only if every one of them passed.
+103 checks; it exits 0 only if every one of them passed. As well as the cases
+above it plays a game to checkmate and promotes a pawn through the Server —
+including an under-promotion to a knight — so §32 and §36 are covered over the
+network and not only in a local game. It finishes by sending 1,600 random
+malformed packets from four Clients at once, dropping two of them mid-stream,
+and then checking that the Server still pairs new Clients and still validates a
+real move.
 
 ## 12. Folder layout
 

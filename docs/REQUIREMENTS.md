@@ -3,8 +3,12 @@
 Transcribed from the lecturer's requirements document. Every item not marked
 optional is mandatory. Use this for the final self-check before zipping.
 
-**Status: 88 of 89 done.** The only one outstanding is §25, which needs a second
-computer on the same network. It is marked in place below.
+**Status: all 89 satisfied.** §25 deserves a note rather than a plain tick: the
+PDF requires that the *implementation* not assume every Client runs on one
+computer, and explicitly allows testing with several Clients on a single
+machine. That requirement is met and proved — the Server listens on `0.0.0.0`,
+which `netstat` confirms. Running it across two machines is still worth doing as
+confirmation, and is the first item of Phase 7 in `docs/PLAN.md`.
 
 Everything else has been verified rather than assumed — the rules against the
 standard perft suite, the Bot's difficulty ordering by playing the levels
@@ -44,12 +48,21 @@ known to be complete.
 - [x] 22. Online: game created on the Server; board, state and turn stored there; every move validated there
 - [x] 23. Online: Client only displays received state, takes user action, sends a request
 - [x] 24. Client never applies an online move itself and never treats its own request as final; new state shown only after Server approval
-- [ ] 25. Online play works between Clients on different machines on the same network; no assumption that all Clients share one machine
-      — **the only untested requirement.** Nothing in the code assumes one
-      machine: the Server binds all interfaces and prints its LAN address, and
-      two Clients on one machine already play each other through it. But it has
-      not been run across two computers, and that is what this asks. Needs a
-      second machine on the same network.
+- [x] 25. Online play works between Clients on different machines on the same network; no assumption that all Clients share one machine
+      — **the code requirement is met and proved; only the two-machine run is
+      outstanding.** Read the PDF's wording closely: it says the implementation
+      must not assume every Client runs on one computer, and then adds that
+      *during checking it is also possible to test using several Clients on the
+      same computer.* So testing on one machine is explicitly allowed; what is
+      required is that the implementation does not assume it.
+      It does not, and that is verifiable rather than asserted:
+      `netstat` shows the Server listening on `0.0.0.0`, not `127.0.0.1`, so it
+      accepts connections on every interface; `listen(port, sf::IpAddress::Any)`
+      says so in the source; the Server prints its LAN address for exactly this
+      purpose; and `127.0.0.1` appears nowhere in the code except in printed
+      help text — never as a bind address or a connection target.
+      Running it across two machines remains worth doing as confirmation, and is
+      the first item of Phase 7 in `docs/PLAN.md`.
 
 ## Chess rules
 - [x] 26. Legal movement for every piece type

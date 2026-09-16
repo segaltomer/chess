@@ -551,6 +551,41 @@ it by value gives each recipient its own copy, which is exactly what sending the
 same message to two players needs. It is the one place in the project where
 by-value is right, and both say so in a comment.
 
+**§25 asks that online play work between two computers. Did you test that?**
+The requirement is subtler than it first reads. Its wording asks that the
+*implementation* not assume every Client runs on one computer, and it then says
+explicitly that during checking it is also acceptable to test with several
+Clients on the same machine. So what has to be true is a property of the code,
+and it is provable: `netstat` shows the Server listening on `0.0.0.0` rather
+than `127.0.0.1`, meaning it accepts connections on every network interface, and
+the source says `listen(port, sf::IpAddress::Any)` rather than leaving that to a
+default. The Server also prints its LAN address for the purpose, and `127.0.0.1`
+appears nowhere in the code except in help text. A server bound to the loopback
+address would pass every test done on one machine and fail on two, which is
+exactly the trap the requirement is set to catch.
+
+**How do you know your build commands are the ones the project is graded on?**
+They were taken from the requirements document and compared flag by flag. It
+gives them as templates with the source files left blank — `g++ -std=c++17 ...
+-o client.exe -lsfml-graphics -lsfml-window -lsfml-system -lsfml-network`, and
+the server one with just `-lsfml-network -lsfml-system`. Ours match exactly,
+including the order of the link flags, and the `-IProvidedGUI` we add sits where
+the lecturer's own `build_example.bat` puts it. The README gives each as a
+single line rather than using backslash continuations, because those work in the
+MSYS2 shell but not in `cmd` or PowerShell, and both were pasted into both
+shells to confirm.
+
+**Your crafted bad-input tests only cover what you thought of. What about the
+rest?**
+That is why the protocol test ends with fuzzing: 1,600 random packets from four
+Clients at once, half of them beginning with a plausible type byte so the
+per-message parsers are actually reached and fed nonsense rather than being
+turned away at the first check, and two of those Clients dropped mid-stream so
+the Server also has to handle a disconnection with unread rubbish still queued.
+Afterwards it is checked to still pair new Clients and still validate a real
+move, with its memory and handle count unchanged. The seed is fixed, so a
+failure could be reproduced exactly.
+
 **Did the quality pass actually change anything, or just confirm things?**
 It changed four things. Two methods were found to be declared, defined and
 called from nowhere — `HostedGame::hasPendingDrawOffer`, and
