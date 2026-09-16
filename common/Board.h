@@ -4,6 +4,7 @@
 #include "Move.h"
 
 #include <array>
+#include <string>
 
 enum class CastlingSide { KingSide, QueenSide };
 
@@ -20,6 +21,18 @@ class Board {
 public:
     // The standard starting position, White at the bottom.
     Board();
+
+    // Builds a position from the board-related fields of a FEN string — the
+    // piece placement, the castling field ("KQkq" or "-") and the en passant
+    // field ("e3" or "-"). Whose turn it is belongs to ChessGame, not here.
+    //
+    // FEN is the standard text notation for a chess position. It is what lets
+    // the test harness load published positions exactly, and what the Bot
+    // hands Stockfish. Anything malformed simply leaves squares empty rather
+    // than throwing, so a bad string cannot produce a half-built position.
+    static Board fromFen(const std::string& placement,
+                         const std::string& castlingField,
+                         const std::string& enPassantField);
 
     // An empty square reads as Piece{} — as does any square index off the
     // board, so a bad index cannot produce a bad piece.
@@ -58,6 +71,7 @@ private:
 
     static int castlingRightIndex(Color colour, CastlingSide side);
 
+    void setCastlingRight(Color colour, CastlingSide side, bool allowed);
     void clearCastlingRight(Color colour, CastlingSide side);
 
     // A castling king has already been moved by applyMove; this brings its

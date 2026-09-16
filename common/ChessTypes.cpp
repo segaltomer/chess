@@ -95,3 +95,19 @@ std::string squareName(int square) {
 
     return std::string{file, rank};
 }
+
+
+int squareFromName(const std::string& name) {
+    if (name.size() != 2) {
+        return NO_SQUARE;
+    }
+
+    const int col = name[0] - 'a';
+    const int row = '8' - name[1];
+
+    if (!isOnBoard(row, col)) {
+        return NO_SQUARE;
+    }
+
+    return squareIndex(row, col);
+}

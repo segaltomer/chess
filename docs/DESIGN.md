@@ -17,8 +17,15 @@ A better idea never justifies breaking one of those.
 ## 1. Board and move representation
 
 **Decision:** one flat list of 64 squares, index 0 = a8, index 63 = h1. Each
-square holds a small **value** — a `struct Square { PieceType type; Color
+square holds a small **value** — a `struct Piece { PieceType type; Color
 colour; }` where `PieceType::None` means empty — not a piece object.
+
+> **Renamed.** This struct was called `Square` when the decision was written.
+> In the code it became `Piece`, because "square" was already doing a second
+> job: a square *index* (`int fromSquare`, 0-63) is the thing most of the
+> engine passes around, and having a type called `Square` that is not that was
+> confusing on sight. `board.pieceAt(fromSquare)` says what it means. Nothing
+> about the decision changed — it is still a value, not an object.
 
 **Why the flat 64:** it is exactly the shape `ChessFrontend::setBoard` already
 takes (`std::array<char, 64>`, same indexing), so there is no conversion layer
@@ -46,18 +53,36 @@ A `Move` carries a from-square, a to-square, and an optional promotion choice.
 
 ## 2. Who owns a game
 
-**Decision:** a base `Game` class holding the board, the rules and the turn,
-with three subclasses: `LocalGame`, `BotGame`, `OnlineGame`.
+**Decision:** the position, the turn and the rules live in one class,
+`ChessGame`, in `common/`. The three game modes are a separate `Game` hierarchy
+in the Client — `LocalGame`, `BotGame`, `OnlineGame` — and each **holds** a
+`ChessGame` where it needs one, rather than inheriting from it.
 
 **Why:** the three modes differ in exactly one thing — who decides a move.
 Local asks the human at the same keyboard, Bot asks Stockfish, Online asks the
 Server. Everything else (legality, check, end conditions) is identical, per §6.
-A base class puts the shared 90% in one place and confines each mode's
+A base class puts the shared behaviour in one place and confines each mode's
 difference to one small file, instead of scattering `if (mode == Online)`
 branches through a single class, which §71 penalises.
 
-This matters most for Online: §22–24 make it a genuinely different object — it
-does not own the board of record, it mirrors one.
+**Why holding and not inheriting** (changed while building Phase 1): this
+decision originally put the board, the rules and the turn *in* the `Game` base
+class, so all three modes would inherit them. That is wrong for Online, and
+wrong in a way that matters. §23–24 say the Client must never apply an online
+move itself and must never treat its own request as final — but a `Game` base
+that owns a board and validates moves hands `OnlineGame` exactly the method
+those requirements forbid it to use. Inheriting a capability you are required
+not to exercise is a trap, not a design.
+
+Separating them means the Client's `OnlineGame` simply has no `ChessGame` to
+mis-use: it holds the last board the Server sent and nothing else. The Server
+holds the `ChessGame` for that match, because §22 says the Server validates.
+Local and Bot games hold their own, because §17–18 say the Client validates
+those. Each mode ends up with exactly the authority its requirement gives it.
+
+The `Game` hierarchy itself is built in Phase 2, once there is a GUI for it to
+talk to. `ChessGame` exists now because the rules engine needs an owner for the
+turn and the result.
 
 ---
 
@@ -154,6 +179,53 @@ Bot difficulty is **not** a class hierarchy — it is three sets of Stockfish
 parameters, because the three levels differ only in values passed to the engine,
 not in behaviour. §73 asks for polymorphism where it suits the design; forcing
 it here would be decoration.
+
+---
+
+---
+
+## 7. Positions are built from FEN
+
+**Decision:** `Board::fromFen` and `ChessGame::fromFen` read FEN, the standard
+one-line text notation for a chess position. There is no FEN *writer* until
+something needs one.
+
+**Why:** two things need it, and one of them is the reason the rules engine can
+be trusted at all.
+
+The move generator is verified with **perft** — play every legal move to a
+given depth, count the resulting positions, and compare against the published
+count for that position. The numbers are agreed on across every chess engine in
+existence, so matching them is real evidence rather than "the tests I thought
+to write pass". The test positions are published *as FEN*, and they are dense,
+deliberately awkward positions. Transcribing five of those by hand into
+`setPiece` calls would add a second thing that can be wrong: when a count then
+disagreed, there would be no way to tell a bug in the engine from a typo in the
+position. Forty lines of parser removes that whole class of doubt.
+
+Second, Phase 3 has to tell Stockfish where the game stands, and `position fen
+<...>` is how UCI does that. The alternative, `position startpos moves ...`,
+would mean `ChessGame` keeping a full move history purely for the engine's
+benefit.
+
+**Where it lives:** the board fields are parsed by `Board` and the side to move
+by `ChessGame`, each parsing the part it owns, so neither needs public setters
+for state that should stay private.
+
+---
+
+## 8. The rules are free functions, not a class
+
+**Decision:** `namespace Rules` holds `isSquareAttacked`, `isInCheck`,
+`pseudoLegalMoves`, `legalMoves` and `isLegalMove` as free functions.
+
+**Why:** none of them has any state. Every answer depends only on the board
+passed in, so there is nothing for an object to own, no constructor that would
+mean anything and no invariant to protect. A class whose members are all static
+is a namespace with extra ceremony, and §71–72 are about putting
+responsibilities where they belong, not about making everything a class. The
+piece rules *are* classes, because there the polymorphism is load-bearing
+(decision 6); these are not, because there is nothing to dispatch on.
 
 ---
 

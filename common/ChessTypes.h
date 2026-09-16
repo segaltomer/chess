@@ -57,3 +57,7 @@ Piece fromDisplayChar(char displayChar);
 // "e4" for square 28. Returns "-" for NO_SQUARE. Used for console logging and
 // for the coordinate notation UCI expects.
 std::string squareName(int square);
+
+// Inverse of squareName. Anything that is not a file letter followed by a rank
+// digit — including FEN's "-" — reads as NO_SQUARE.
+int squareFromName(const std::string& name);

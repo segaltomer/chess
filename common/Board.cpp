@@ -1,6 +1,7 @@
 #include "Board.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstddef>
 #include <cstdlib>
 
@@ -34,6 +35,56 @@ Board::Board() {
     }
 
     castlingRights_.fill(true);
+}
+
+
+Board Board::fromFen(const std::string& placement, const std::string& castlingField,
+                     const std::string& enPassantField) {
+    Board board;
+    board.squares_.fill(Piece{});
+    board.castlingRights_.fill(false);
+    board.enPassantTarget_ = NO_SQUARE;
+
+    // FEN lists the ranks from 8 down to 1, which is exactly our row order, so
+    // a rank separator simply moves to the next row. A digit is a run of empty
+    // squares, and anything else is a piece letter.
+    int row = 0;
+    int col = 0;
+
+    for (char symbol : placement) {
+        if (symbol == '/') {
+            ++row;
+            col = 0;
+            continue;
+        }
+
+        const bool isEmptyRun = (std::isdigit(static_cast<unsigned char>(symbol)) != 0);
+        if (isEmptyRun) {
+            col += symbol - '0';
+            continue;
+        }
+
+        if (isOnBoard(row, col)) {
+            board.squares_[static_cast<std::size_t>(squareIndex(row, col))] =
+                fromDisplayChar(symbol);
+        }
+
+        ++col;
+    }
+
+    const bool hasWhiteKingSide = (castlingField.find('K') != std::string::npos);
+    const bool hasWhiteQueenSide = (castlingField.find('Q') != std::string::npos);
+    const bool hasBlackKingSide = (castlingField.find('k') != std::string::npos);
+    const bool hasBlackQueenSide = (castlingField.find('q') != std::string::npos);
+
+    board.setCastlingRight(Color::White, CastlingSide::KingSide, hasWhiteKingSide);
+    board.setCastlingRight(Color::White, CastlingSide::QueenSide, hasWhiteQueenSide);
+    board.setCastlingRight(Color::Black, CastlingSide::KingSide, hasBlackKingSide);
+    board.setCastlingRight(Color::Black, CastlingSide::QueenSide, hasBlackQueenSide);
+
+    board.enPassantTarget_ = squareFromName(enPassantField);
+
+    return board;
 }
 
 
@@ -75,10 +126,15 @@ bool Board::canCastle(Color colour, CastlingSide side) const {
 }
 
 
-void Board::clearCastlingRight(Color colour, CastlingSide side) {
+void Board::setCastlingRight(Color colour, CastlingSide side, bool allowed) {
     const int index = castlingRightIndex(colour, side);
 
-    castlingRights_[static_cast<std::size_t>(index)] = false;
+    castlingRights_[static_cast<std::size_t>(index)] = allowed;
+}
+
+
+void Board::clearCastlingRight(Color colour, CastlingSide side) {
+    setCastlingRight(colour, side, false);
 }
 
 

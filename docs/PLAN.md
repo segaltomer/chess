@@ -15,9 +15,9 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 - [x] Legal movement for each piece type (§26)
 - [x] Captures; cannot capture own piece (§27)
 - [x] Blocked paths, per piece type (§28)
-- [ ] Turn order (§29)
-- [ ] Check detection (§30)
-- [ ] Reject moves leaving own king in check (§31)
+- [x] Turn order (§29)
+- [x] Check detection (§30)
+- [x] Reject moves leaving own king in check (§31)
 - [ ] Checkmate (§32)
 - [ ] Stalemate (§33)
 - [ ] Castling, all conditions (§34)
@@ -122,6 +122,10 @@ stockfish/                stockfish.exe + Copying.txt (GPL - required)
 - `.git/` — the repo. Keep it on disk, keep pushing it; it just isn't submitted.
 - `.vscode/`, `.claude/` — editor and tool local state.
 - `CLAUDE.md`, `docs/` — our working notes. They stay in the repo.
+- `tests/` — the perft harness that verifies the rules engine. Not Client or
+  Server source, has its own `main()`, and is not picked up by the
+  `common/*.cpp`, `client/*.cpp` or `server/*.cpp` build commands. It stays in
+  the repo because it is how a rules change gets re-checked.
 - `.gitignore` — meaningless without `.git/`.
 - `gui_example.exe` — his demo's binary, not asked for.
 - `*.o`, `*.a`, any build intermediates.
