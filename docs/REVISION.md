@@ -294,10 +294,39 @@ class per level would be decoration. §73 asks for polymorphism where it suits
 the design, and here it does not.
 
 **How do you know the levels are actually different, as §20 demands?**
-They were played against each other. Hard beat Easy from both colours, Medium
-beat Easy, and Hard beat Medium — all four games by checkmate, with lopsided
-material at the end (Medium finished with 3 points of material against Hard's
-26). That is a measurement, not an assumption.
+They were made to play each other, by a test that is kept in the repo:
+`tests/bot_match.cpp`. It starts two Stockfish processes at different settings
+and plays a full game, then repeats with the colours swapped — six games, every
+pairing from both sides. The stronger level won all six by checkmate, with final
+material as lopsided as 33 points against 9. That is a measurement, not an
+assumption, and swapping colours matters because otherwise a win could just be
+the advantage of moving first.
+
+The test calls the same `settingsFor()` the Bot uses rather than repeating the
+numbers, so if someone changed a difficulty constant the test would re-check it.
+A test carrying its own copy of the values would keep passing after the real
+ones changed — worse than having no test.
+
+**You can't play chess well. How can you claim the hard level is hard?**
+That is precisely why it is measured rather than played. A human impression of
+engine strength is an anecdote, and one from a weak player is not even that —
+every level beats me, so I cannot tell them apart by feel. Making the levels
+play *each other* removes me from the judgement entirely: the question becomes
+"which setting checkmates the other", which has an objective answer.
+
+I did first try to find a way to see it by hand — a fixed four-move attack
+(Scholar's Mate) that I could click without understanding it, hoping Easy would
+fall for it and Hard would not. Over eight games per level, every level defended
+it and I lost my queen every time, so it separated nothing. The lesson is that
+avoiding one specific well-known trap is not a measure of strength; it is the
+kind of thing even a deliberately weakened engine does by accident.
+
+**Does that test check anything besides the difficulty ordering?**
+Yes — every move either engine produces is played through `ChessGame::makeMove`,
+and a refusal ends the game as a reported failure rather than being worked
+around. So a run is several hundred more half-moves of our move generator being
+cross-checked against a real engine, and it is §47 restated as a test: the
+engine proposes, our code disposes.
 
 **Something subtle bit you when testing the engine. What?**
 An engine reading from a pipe treats **end-of-file as `quit`**. Feeding

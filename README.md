@@ -83,6 +83,23 @@ All 26 cases pass — roughly 15 million positions. Re-run it after any change
 under `common/`. `tests/` is a development tool and is not part of the
 submission.
 
+### Verifying the Bot's difficulty levels
+
+The three levels are checked by making them play each other, so the difference
+is measured rather than judged by eye:
+
+```bash
+g++ -std=c++17 -O2 -Icommon -Iclient common/*.cpp client/StockfishEngine.cpp \
+    client/BotDifficulty.cpp client/ConsoleInput.cpp tests/bot_match.cpp \
+    -o bot_match.exe
+./bot_match.exe
+```
+
+Each pairing is played from both colours, so a win cannot be explained by
+moving first. The stronger level wins all six games by checkmate. Every engine
+move is played through `ChessGame::makeMove`, so the run also confirms our own
+rules accept everything a real engine produces.
+
 ## Stockfish
 
 Stockfish 19 (release tag `sf_19`), Windows x86-64 **universal** build, in
@@ -149,9 +166,9 @@ squares instead of pieces.
 ├── Example/
 │   └── main.cpp          supplied GUI demo
 ├── common/               chess rules, shared by both programs
-├── client/               client sources (not written yet)
+├── client/               console screens, GUI wiring, Bot, client networking
 ├── server/               server sources
-├── tests/                perft harness; not submitted
+├── tests/                perft and Bot-match harnesses; not submitted
 ├── stockfish/            Stockfish 19 engine + GPL licence
 ├── build_example.bat     supplied
 ├── GUI_USAGE.md          supplied GUI API reference

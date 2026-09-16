@@ -549,3 +549,50 @@ like it has frozen after every move.
 there is anything to do — it returns at once unless the game is running and it
 is the Bot's turn. That keeps the base class free of any knowledge about which
 modes have a non-human opponent.
+
+
+## Proving the levels differ · `tests/bot_match.cpp` · §19-20
+
+**What it does.** Starts two Stockfish processes at different difficulty
+settings and makes them play a full game against each other, then repeats with
+the colours swapped. Six games in all: Hard–Easy, Hard–Medium, Medium–Easy,
+each from both sides.
+
+**Why it exists.** §20 asks that the levels be *demonstrably* different, and
+the obvious way to check — play them and see — turned out not to work here. The
+student does not play chess well enough to feel the difference, and even a
+strong player's impression would be an anecdote rather than evidence. Making
+the levels play each other replaces the judgement with a result: the stronger
+setting won all six games by checkmate, with final material as lopsided as 33
+against 9. Swapping colours matters, because otherwise a win could just be the
+advantage of moving first.
+
+It also re-runs. The difficulty numbers are three constants someone could
+change; this is what catches it if changing them stopped the ordering holding.
+
+**The tricky part — two of them.**
+
+The harness calls the shipped `settingsFor()` rather than repeating the skill
+levels and times. A test holding its own copy of the values would keep passing
+after the real ones were changed, which is worse than no test.
+
+Neither engine is trusted to be right. Every move either one produces is played
+through `ChessGame::makeMove`, and a refusal ends the game as a reported failure
+instead of being worked around. That is §47 restated as a test, and it doubles
+as a cross-check of our move generator against a real engine — several hundred
+half-moves per run, all accepted.
+
+Two things had to be handled for the games to end at all. Neither the fifty-move
+rule nor draw by repetition is implemented, since §26-39 does not ask for
+either, so two engines can shuffle forever; a game reaching 300 half-moves is
+stopped and judged on material. And each pairing gets fresh `startNewGame()`
+calls, so nothing carries over from the previous game.
+
+**A test that was tried and thrown away.** The first attempt was to find a fixed
+sequence of moves the student could click without understanding them — the
+four-move "Scholar's Mate" — hoping Easy would fall for it and Hard would not.
+Measured over eight games per level, every level defended it and White lost its
+queen every time, so it separated nothing. Worth recording because the idea is
+tempting: a beginner's trap is not a strength test, since avoiding one specific
+known trap is exactly the kind of thing even a deliberately weakened engine
+does by accident.

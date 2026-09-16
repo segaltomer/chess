@@ -5,17 +5,17 @@ of the last one can read this and know exactly where things stand.
 
 ---
 
-**Phase:** 3 — the Bot (§18-20, §43-47). **Code complete; awaiting the
-student's play-test.** Phases 1 and 2 are done.
+**Phase:** 3 — the Bot (§18-20, §43-47). **Done and confirmed at the board.**
+Phases 1 and 2 are done. **Next up: Phase 4, the Server and Online play.**
 
 **In progress:** nothing.
 
 **Files mid-edit:** none. Working tree clean.
 
-**The one open item:** the student should play all three Bot levels and confirm
-they feel different, that the Bot replies, and that Offer Draw is hidden. The
-strength ordering has already been measured (see below), so this is a check on
-the feel and the wiring, not on the levels themselves.
+The student confirmed the Bot replies to every move and that Offer Draw is
+absent in Bot mode. The strength difference was deliberately *not* confirmed by
+eye — the student does not play chess well enough to feel it, and an impression
+would not be evidence. `tests/bot_match.cpp` measures it instead; see below.
 
 ## What is done
 
@@ -83,11 +83,21 @@ and disconnecting in any order.
 - It honours its time limit (912 ms for a 900 ms budget).
 - **120 engine half-moves all accepted by `ChessGame::makeMove`** — the §47
   check, and an independent cross-check of our move generator.
-- **The levels were measured, not assumed:** Hard beat Easy from both colours,
-  Medium beat Easy, Hard beat Medium — all four by checkmate, with final
-  material such as 3 against 26.
+- **The levels were measured, not assumed** — `tests/bot_match.cpp`, kept in
+  the repo and re-runnable:
+
+      g++ -std=c++17 -O2 -Icommon -Iclient common/*.cpp client/StockfishEngine.cpp \
+          client/BotDifficulty.cpp client/ConsoleInput.cpp tests/bot_match.cpp \
+          -o bot_match.exe
+      ./bot_match.exe
+
+  Six games, each pairing from both colours. The stronger level won all six by
+  checkmate; material at the end as lopsided as 33 against 9. It calls the
+  shipped `settingsFor()`, so changing a difficulty constant re-tests it.
 - Stockfish runs as a separate process and **is gone once the client exits**,
-  so the RAII shutdown leaves nothing orphaned.
+  so the RAII shutdown leaves nothing orphaned. Confirmed live: with a Bot game
+  open, `stockfish.exe` appears in Task Manager's **Details** tab with
+  `client.exe` as its parent process.
 
 ## Next step — Phase 4, the Server and Online play
 

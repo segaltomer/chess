@@ -58,9 +58,15 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
       by playing 120 engine half-moves through `ChessGame::makeMove`
 - [x] Hide the Offer Draw button in Bot mode
 - [x] `Game` base class extracted, per DESIGN decision 2 (§73)
-- [ ] **Student to confirm by playing it.** Play each of the three levels and
-      confirm they feel different, that the Bot replies to your moves, and
-      that Offer Draw is absent. See `docs/CLAUDE_CODE.md` §4.
+- [x] **Confirmed by playing it.** Checked at the board: the Bot replies to
+      every move, and Offer Draw is absent in Bot mode. The strength difference
+      was *not* judged by eye — the student does not play chess well enough to
+      feel it, and an impression would not be evidence anyway. It is measured
+      instead by `tests/bot_match.cpp`; see below.
+- [x] `tests/bot_match.cpp` — the levels play each other, each pairing from
+      both colours. The stronger level wins all six by checkmate. This is the
+      artifact that demonstrates §19-20, and it re-runs after any change to the
+      difficulty values.
 
 ## Phase 4 — Server and Online (§11, 21-25, 40-42, 50, 56-63)
 
@@ -134,10 +140,11 @@ stockfish/                stockfish.exe + Copying.txt (GPL - required)
 - `.git/` — the repo. Keep it on disk, keep pushing it; it just isn't submitted.
 - `.vscode/`, `.claude/` — editor and tool local state.
 - `CLAUDE.md`, `docs/` — our working notes. They stay in the repo.
-- `tests/` — the perft harness that verifies the rules engine. Not Client or
-  Server source, has its own `main()`, and is not picked up by the
-  `common/*.cpp`, `client/*.cpp` or `server/*.cpp` build commands. It stays in
-  the repo because it is how a rules change gets re-checked.
+- `tests/` — the perft harness that verifies the rules engine, and the Bot
+  match that verifies the difficulty levels. Not Client or Server source, each
+  has its own `main()`, and neither is picked up by the `common/*.cpp`,
+  `client/*.cpp` or `server/*.cpp` build commands. They stay in the repo
+  because they are how a rules or difficulty change gets re-checked.
 - `.gitignore` — meaningless without `.git/`.
 - `gui_example.exe` — his demo's binary, not asked for.
 - `*.o`, `*.a`, any build intermediates.
