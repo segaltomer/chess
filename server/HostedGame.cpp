@@ -59,20 +59,24 @@ bool HostedGame::isOver() const {
 
 
 bool HostedGame::tryMove(int clientId, const Move& move, std::string& rejectionReason) {
+    // These reasons are shown to the player in the GUI's side panel, which is
+    // 260 pixels wide and does not wrap, so they are kept short enough to fit
+    // there rather than being cut off mid-word. They read correctly in the
+    // server's log too: "rejected - Not your turn".
     if (game_.isOver()) {
-        rejectionReason = "the game has already finished";
+        rejectionReason = "Game already over";
         return false;
     }
 
     if (!hasPlayer(clientId)) {
-        rejectionReason = "you are not a player in this game";
+        rejectionReason = "Not your game";
         return false;
     }
 
     // §29 checked here rather than inside ChessGame, because ChessGame knows
     // which colour may move but not which person is allowed to move it.
     if (colourOf(clientId) != game_.sideToMove()) {
-        rejectionReason = "it is not your turn";
+        rejectionReason = "Not your turn";
         return false;
     }
 
@@ -80,7 +84,7 @@ bool HostedGame::tryMove(int clientId, const Move& move, std::string& rejectionR
     // changes nothing at all, so a rejected request cannot leave the position
     // half-updated.
     if (!game_.makeMove(move)) {
-        rejectionReason = "that move is not legal";
+        rejectionReason = "Illegal move";
         return false;
     }
 

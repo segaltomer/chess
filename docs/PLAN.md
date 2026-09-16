@@ -86,9 +86,13 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 - [x] Resign and draw offers relayed through the Server (§50, §56)
 - [x] Automated protocol test: 67 checks over matchmaking, validation, game
       isolation, draw offers, resignation, disconnection and malformed input
-- [ ] **Student to confirm by playing it.** Two clients and one server at once:
-      play a game through both windows, try moving out of turn, offer a draw
-      and both accept and decline it, resign, and close one client mid-game.
+- [x] **Confirmed by playing it.** Two clients and one server at once: the game
+      plays through both windows correctly.
+- [x] Side-panel captions measured against the GUI's 260px panel and shortened
+      where they overflowed — the panel neither wraps nor truncates
+- [x] Board orientation checked against the requirements document: flipping for
+      Black is not required, and the provided GUI cannot do it. See DESIGN
+      decision 1.
 - [ ] Verified between two machines on one network (§25)
 
 ## Phase 5 — robustness (§64-70)

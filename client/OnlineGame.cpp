@@ -54,9 +54,12 @@ bool OnlineGame::isOver() const {
 }
 
 
+// The GUI's side panel is 260 pixels wide and does not wrap or shorten what it
+// is given, so anything longer runs off the edge of the window. Every caption
+// below was measured against that width in the GUI's own font and sizes.
 std::string OnlineGame::turnText() const {
     if (!hasGameStarted_) {
-        return "Waiting for an opponent...";
+        return "Finding a game";
     }
 
     return isMyTurn() ? "Your move" : (opponentName_ + " to move");
@@ -69,7 +72,9 @@ std::string OnlineGame::statusText() const {
     }
 
     if (!hasGameStarted_) {
-        return "Close this window to stop searching";
+        // How to cancel is explained on the console, where there is room for a
+        // whole sentence.
+        return "Waiting for opponent";
     }
 
     // §30 is decided on the Server; this Client only repeats what it was told.
@@ -275,7 +280,10 @@ void OnlineGame::handleMoveRejected(sf::Packet& packet) {
     // §24 again: the request was not final, and this is the Server saying so.
     // Nothing on the board has to be put back, because nothing was moved.
     isAwaitingServerReply_ = false;
-    notice_ = "Rejected: " + message.reason;
+
+    // The Server words these to fit the panel, so they are shown as they came
+    // rather than with a prefix that would push them off the edge.
+    notice_ = message.reason;
 
     std::cout << "Move rejected: " << message.reason << std::endl;
 }

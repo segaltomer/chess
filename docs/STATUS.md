@@ -13,14 +13,21 @@ student's two-client play-test.** Phases 1-3 are done.
 
 **Files mid-edit:** none. Working tree clean.
 
-**The two open items**, both needing hands the code does not have:
+Online play has been confirmed at the board through two real client windows.
 
-1. Play an online game through two real client windows — see "How to test it"
-   below. Everything in it has been checked at the protocol level, so this is a
-   check on the GUI wiring, not on the rules or the messages.
-2. §25: run the Server and one Client on this machine and a second Client on
-   another machine on the same network. This is the one requirement that cannot
-   be tested on one computer at all.
+**The one open item:** §25 — run the Server and one Client on this machine and a
+second Client on another machine on the same network. It is the only requirement
+that cannot be tested on one computer at all.
+
+**Two findings from that play-test, both now fixed or settled:**
+
+- The GUI's side panel is 260 pixels wide and neither wraps nor truncates, so
+  three captions ran off the edge of the window. Every string the Client puts in
+  that panel has now been measured in the GUI's own font and sizes; the
+  move-rejection reasons are worded on the Server to fit it.
+- **The board is not flipped for Black, and should not be.** Checked against the
+  requirements document itself, not assumed — see DESIGN decision 1 for the
+  evidence. Do not "fix" this later.
 
 ## What is done
 
@@ -160,6 +167,14 @@ GitHub Desktop one is newer:
 Commit messages must be passed with `git commit -F <file>`, not `-m`, because
 PowerShell mangles arguments containing double quotes when handing them to a
 native executable.
+
+**Reading `docs/requirements.pdf` (the authority) from a shell.** There is no
+`pdftotext`, no Python, and driving Word through COM hangs. What works: read the
+file's bytes, inflate each `stream ... endstream` with
+`System.IO.Compression.DeflateStream` (skipping the two-byte zlib header), then
+decode the `[...] TJ` runs through the `ToUnicode` CMap built from the
+`beginbfchar` and `beginbfrange` blocks. The Hebrew comes out legible but
+visually reversed, so searching it means searching for reversed spellings.
 
 **Never rewrite a UTF-8 doc through PowerShell** (`Get-Content -Raw` then
 `WriteAllText`, or `Set-Content`). PowerShell 5.1 reads UTF-8 as ANSI and

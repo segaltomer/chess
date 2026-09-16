@@ -32,6 +32,27 @@ takes (`std::array<char, 64>`, same indexing), so there is no conversion layer
 between engine and screen and no chance of an off-by-one flip. Row and column
 come from `index / 8` and `index % 8`.
 
+**The board is never flipped for Black, and that is correct.** Both players see
+rank 8 at the top and file a on the left. It is a fair question — most chess
+software turns the board round for whoever is playing Black — so the reasons are
+recorded here rather than left to be rediscovered:
+
+- **It is not a requirement.** The requirements document was searched for it
+  directly: the Hebrew for flip, rotate, direction, above, below and point of
+  view appear nowhere in it. "Board" appears once, in §22, about where the
+  position is *stored*. §26-39 list the chess rules and say nothing about which
+  way round any of it is drawn.
+- **The provided GUI cannot do it.** `ChessFrontend` draws its own coordinate
+  labels from the row and column it is given — files as `'a' + col`, ranks as
+  `8 - row` — and exposes no orientation setting. Reversing the 64 characters
+  before handing them over would move the pieces but not the labels, producing a
+  board with Black at the bottom still labelled with rank 8 at the top: worse
+  than not flipping at all. Fixing the labels means editing `ProvidedGUI/`,
+  which is the one thing the project may never do.
+
+So the lecturer's own component is built on the assumption that the board is not
+flipped, which is about as clear as an answer gets.
+
 **Why values and not piece objects** (corrected — see below): checking legality
 means asking "if I made this move, would my own king be attacked?" (§31), which
 in turn is what checkmate and stalemate are defined against (§32-33). The

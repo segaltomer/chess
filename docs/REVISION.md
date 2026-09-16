@@ -449,6 +449,27 @@ exists. The same mechanism covers leaving a live game — closing the window the
 sends `Resign`, because walking away from a game in progress concedes it rather
 than leaving the opponent waiting forever.
 
+**Most chess programs turn the board round for the player with Black. Why
+doesn't yours?**
+Two reasons, and neither is laziness. It is not asked for: the requirements
+document says nothing about orientation anywhere — it lists the chess rules and
+says where the position is stored, never which way up it is drawn. And the
+provided GUI cannot do it. `ChessFrontend` draws its own coordinate labels from
+the row and column it is handed — files as `'a' + col`, ranks as `8 - row` — and
+has no orientation setting. Reversing the 64 characters before passing them in
+would move the pieces but leave the labels alone, giving a board with Black at
+the bottom still labelled rank 8 at the top. That is worse than not flipping,
+and correcting it would mean editing `ProvidedGUI/`, which the project may never
+do. The lecturer's own component is built assuming an unflipped board.
+
+**Why are the move-rejection messages so short?**
+Because the GUI's side panel is 260 pixels wide and neither wraps nor shortens
+what it is given — a long string simply runs off the edge of the window, which
+is what "Rejected: that move is not legal" did. The reasons are now "Illegal
+move", "Not your turn", "Game already over" and "Not your game", each measured
+against that width in the GUI's own font and size rather than guessed at. They
+are worded on the Server, so they read correctly in its log too.
+
 **How was any of this tested without two people and two computers?**
 With a program that connects as several clients at once and checks the Server's
 answers — 67 checks in all. It covers matchmaking and the waiting state, moves
