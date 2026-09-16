@@ -70,6 +70,19 @@ bool ChessGame::isLegal(const Move& move) const {
 }
 
 
+bool ChessGame::needsPromotionChoice(int fromSquare, int toSquare) const {
+    const std::vector<Move> moves = legalMoves();
+
+    // The generator already emits a promoting move once per piece it could
+    // become, so the question is simply whether any of them carries a choice.
+    return std::any_of(moves.begin(), moves.end(), [fromSquare, toSquare](const Move& move) {
+        const bool isSameTravel = (move.from == fromSquare && move.to == toSquare);
+
+        return isSameTravel && move.promotion != PieceType::None;
+    });
+}
+
+
 bool ChessGame::makeMove(const Move& move) {
     if (!isLegal(move)) {
         return false;

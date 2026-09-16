@@ -49,6 +49,12 @@ public:
 
     bool isLegal(const Move& move) const;
 
+    // §36: true when a legal move between these two squares would land a pawn
+    // on the far rank. A move that needs a choice is not complete until it
+    // carries one — the Client clicks from/to, asks this, and if it is true
+    // shows the promotion dialog and only then calls makeMove with the answer.
+    bool needsPromotionChoice(int fromSquare, int toSquare) const;
+
     // Plays the move if it is legal for the side to move, then hands the turn
     // over (§29). Returns false and changes nothing at all otherwise, so a
     // rejected move cannot leave the game half-updated.

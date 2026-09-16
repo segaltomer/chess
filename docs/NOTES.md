@@ -256,3 +256,31 @@ became meaningful and all 26 cases pass — about 15 million positions across si
 positions chosen by engine authors to be nasty. That is the evidence that
 §26-36 are right in general and not merely in the cases we thought to check:
 start position to depth 5 is 4,865,609, Kiwipete to depth 4 is 4,085,603.
+
+---
+
+## Promotion, and how the GUI will ask · `common/ChessGame` · §36
+
+The engine side has been done since the movement commit: a pawn move landing on
+the far rank is generated four times over, once carrying each piece it could
+become. So the promotion is part of the move rather than a step that follows
+it, and every later stage — legality, applying it, sending it over the network,
+handing it to Stockfish — needs no special case. `e7e8q` is just a move.
+
+What this commit adds is the one thing the Client needs to drive the dialog:
+`needsPromotionChoice(from, to)`. The provided GUI reports a click on a source
+square and then a target square, with no idea that a promotion is involved — it
+never knows the rules. So the Client asks this after the second click, and if
+it comes back true, calls `showPromotionDialog`, waits for `PromotionSelected`,
+and only then calls `makeMove` with the answer filled in.
+
+**The tricky part:** the choice is not optional and the engine enforces it in
+both directions. `a7a8` with no piece named is not a legal move and is refused,
+because no such move was ever generated — and equally, `e2e4` carrying a queen
+is refused, because that was not generated either. A caller cannot forget to
+ask, and cannot smuggle a promotion onto a move that is not one. That falls out
+of `Move::promotion` being part of what makes two moves equal.
+
+Under-promotion is real, not decoration: there is a test where a pawn reaching
+e8 gives check as a knight and does not as a queen, because e8 and the black
+king on g7 share no rank, file or diagonal. §36 requires all four choices.
