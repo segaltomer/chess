@@ -129,7 +129,18 @@ Commit messages must be passed with `git commit -F <file>`, not `-m`, because
 PowerShell mangles arguments containing double quotes when handing them to a
 native executable.
 
-**`git push` does not work from this shell** — there are no credentials here
-and it fails with `could not read Username for 'https://github.com'`. Commits
-are being made locally and are safe, but **the GitHub backup is not current**.
-Push from GitHub Desktop, which has the login (`docs/CLAUDE_CODE.md` §6).
+**`git push` cannot work from this shell, by design of the machine's setup.**
+Windows Credential Manager holds no `git:https://github.com` entry; GitHub
+Desktop keeps its token in its own private format (`LegacyGeneric:target=GitHub
+- https://api.github.com/segaltomer`) which plain `git` cannot read. So a push
+from here has to prompt for a username, and this shell has no interactive
+input: it fails with `could not read Username`.
+
+**This is not a problem as long as the student pushes from GitHub Desktop**,
+which is what `docs/CLAUDE_CODE.md` §6 already tells them to do. Commit locally,
+tell them a commit is ready, and they push.
+
+To make pushing work from a shell one day: install Git for Windows (it puts
+`git` on `PATH` and ships Git Credential Manager), then run `git push` once in
+a normal terminal and sign in. The token then lands in the Windows vault and
+any shell can use it.
