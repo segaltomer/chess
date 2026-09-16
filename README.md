@@ -1,45 +1,37 @@
-# C++ Chess — Client / Server
+# C++ Chess — Client and Server
 
-Final project for the C++ course. **Work in progress.** The full chess rules
-engine is implemented and verified in `common/`, and `server/` currently listens
-for connections and tracks them. The Client, the Bot and the online protocol are
-not written yet.
+A chess system in two separate programs, as the project requires: `client.exe`
+and `server.exe`. Each compiles and runs independently of the other.
 
-This file is rewritten for submission in Phase 7, where §83 requires it to walk
-the checker through compiling and running every mode.
+The Client offers four things: a **Local Game** between two people at one
+keyboard, a **Player vs Bot** game against Stockfish at one of three difficulty
+levels, an **Online Game** against another Client through the Server, and Exit.
 
-## Build environment
+Both executables are included and ready to run, so nothing has to be compiled to
+try it. If you would rather build it yourself, the commands are below.
 
-- MSYS2 **UCRT64** / MinGW-w64, installed at `C:\msys64`
+---
+
+## 1. What you need
+
+- **MSYS2 UCRT64 / MinGW-w64**, installed at `C:\msys64`
+- **g++ 16.2.0** — `mingw-w64-ucrt-x86_64-gcc 16.2.0-3`
+- **SFML 3.0.2** — `mingw-w64-ucrt-x86_64-sfml 3.0.2-3`
 - C++17
-- SFML **3.x** (graphics + network)
-- Stockfish, used as a separate process for the Bot (added later)
 
-Installed versions (MSYS2 UCRT64):
-
-- g++ 16.2.0 — `mingw-w64-ucrt-x86_64-gcc 16.2.0-3`
-- SFML 3.0.2 — `mingw-w64-ucrt-x86_64-sfml 3.0.2-3`
-- gdb 17.2 — `mingw-w64-ucrt-x86_64-gdb 17.2-1`
-
-## Installing the toolchain
-
-In the **MSYS2 UCRT64** shell:
+To install the toolchain, in the **MSYS2 UCRT64** shell:
 
 ```bash
-pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-gdb mingw-w64-ucrt-x86_64-sfml
+pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-sfml
 ```
 
-## Building
+Nothing else is needed. Stockfish is included; see section 8.
 
-Run all commands from the project root.
+## 2. Compiling
 
-Provided GUI example:
+Run both commands from the project root.
 
-```bat
-build_example.bat
-```
-
-Client:
+**Client:**
 
 ```bash
 g++ -std=c++17 common/*.cpp client/*.cpp ProvidedGUI/ChessFrontend.cpp -IProvidedGUI \
@@ -47,184 +39,253 @@ g++ -std=c++17 common/*.cpp client/*.cpp ProvidedGUI/ChessFrontend.cpp -IProvide
     -lsfml-graphics -lsfml-window -lsfml-system -lsfml-network
 ```
 
-Server:
+**Server:**
 
 ```bash
 g++ -std=c++17 common/*.cpp server/*.cpp -o server.exe -lsfml-network -lsfml-system
 ```
 
-The server links no `sfml-graphics`, since it displays no GUI.
+`common/` holds the chess rules and the protocol messages, and is compiled into
+both programs — the rules have to be identical in every mode, and the Server
+validates online games while the Client validates local and Bot games. The
+Server links no `sfml-graphics`, since it shows no window.
 
-### Running the server
+Both build without warnings under `-Wall -Wextra`.
+
+## 3. Before you run: two things that matter
+
+**Run the executables from the project root.** The provided GUI looks for the
+piece images relative to the current working directory. Started from anywhere
+else, the board draws lettered placeholder squares instead of pieces.
+
+**The 19 runtime DLLs must sit beside the executables.** They are included in
+this folder. Alternatively, run from a shell with `C:\msys64\ucrt64\bin` on
+`PATH`, such as the MSYS2 UCRT64 shell.
+
+If a DLL is missing, `client.exe` reports it. `server.exe` does not: Windows
+ends the process before `main` runs, so it exits instantly with code
+`0xC0000135` and **no message at all**. If the server appears to do nothing when
+launched, that is why.
+
+## 4. Running the Server
 
 ```bash
 ./server.exe          # listens on the default port, 53000
-./server.exe 53001    # or a port of your choosing
+./server.exe 53001    # or any port from 1024 to 65535
 ```
 
-It prints the port and the two addresses a Client can use — `127.0.0.1` for a
-Client on the same machine, and this machine's LAN address for a Client on
-another. Those are what you type into the Client's connection screen. It then
-waits, logging every connection, pairing, move, draw offer, resignation and
-disconnection, until you close it.
+On startup it prints the port and **the two addresses a Client can use**:
 
-### Running the client
+```text
+Chess server is listening on port 53000.
+Enter these in the Client's connection screen:
+  a Client on this machine:   127.0.0.1   port 53000
+  a Client on another machine: 192.168.1.20   port 53000
+```
+
+Use `127.0.0.1` for a Client on the same computer, and the second address for a
+Client on another computer on the same network.
+
+It then runs until you close the window, logging every connection and
+disconnection, every entry to and exit from the matchmaking queue, every game
+created and who was assigned which colour, every move accepted or rejected and
+why, every draw offer and answer, every resignation, and every game ending.
+
+## 5. Running a Client and connecting
 
 ```bash
 ./client.exe
 ```
 
-It asks for the server's address and port first; the main menu appears only
-once that connection succeeds. The menu offers a Local Game (two players at one
-keyboard), Player vs Bot (choose Easy, Medium or Hard first), Online Game, and
-Exit.
+It asks for the Server's address and then the port — the two values the Server
+printed. **The main menu appears only after the connection succeeds.** A bad
+address, a bad port or a Server that is not running produces a clear message and
+the choice to try again, change the address, change the port, or exit.
 
-### Playing an online game
+Once connected:
 
-Online play needs the server and **two** clients. Start the server, then run
-`client.exe` twice — either twice on this machine, or once here and once on
-another machine on the same network, using the LAN address the server printed.
+```text
+Main menu
+  1) Local Game      - two players at this computer
+  2) Player vs Bot   - play against Stockfish
+  3) Online Game     - find an opponent through the server
+  4) Exit
+```
 
-In both clients, connect and choose **Online Game**. The first to ask sees
-"Waiting for an opponent..."; when the second asks, the server pairs them,
-assigns colours and opens both boards. The server owns the position: a click
-sends a request and the piece moves only once the server has approved it, so
-moving out of turn or making an illegal move simply does nothing on the board
-and is logged as rejected on the server console.
+In every game, a move is made by clicking the piece and then the destination
+square. The side panel shows whose turn it is and the game status, and holds the
+Offer Draw and Resign buttons.
 
-Closing a client's board window while a game is running concedes that game, and
-the opponent is told. The server keeps running, and any other games in progress
-are unaffected.
+## 6. Local Game (menu option 1)
 
-### Verifying the chess rules
+Choose **1**. The board opens immediately with two players at this one
+keyboard — White moves first, then Black, on the same screen. The Server is not
+involved at all; this Client owns the position and checks every move itself.
 
-The rules engine is checked with **perft**, which plays every legal move to a
-given depth and counts the positions reached. The counts for the six standard
-test positions are published and agreed on across chess engines, so matching
-them all is meaningful evidence rather than a self-written test passing.
+- **Offer Draw** shows the offer to the other player on this same window, who
+  can Accept or Decline. Accepting ends the game as a draw.
+- **Resign** asks for confirmation first, and resigns for whoever is to move.
+- Closing the board window returns to the menu.
+
+## 7. Player vs Bot (menu option 2)
+
+Choose **2**. Before the game starts you are asked for a difficulty:
+
+```text
+Choose the Bot's difficulty
+  1) Easy     - blunders often, good for learning
+  2) Medium   - plays sensibly, misses some tactics
+  3) Hard     - full strength, very difficult to beat
+```
+
+The game begins as soon as a level is chosen. You play White; the Bot replies
+after each of your moves, and the status line reads "Bot is thinking..." while
+it does. Offer Draw is hidden in this mode, as there is nobody to consider an
+offer. Resign works as it does everywhere else.
+
+The three levels differ in Stockfish's own Skill Level (0, 8 and 20) and in how
+long it may search (100 ms, 400 ms and 1000 ms). Skill Level is the setting that
+matters: below 20 Stockfish deliberately plays moves it has judged inferior, so
+a low level blunders the way a weak human does. Section 11 shows how to verify
+the difference rather than take it on trust.
+
+## 8. Online Game (menu option 3)
+
+Online play needs the Server and **two** Clients. Start the Server, then run
+`client.exe` twice — either twice on this computer, or once here and once on
+another computer on the same network, using the LAN address the Server printed.
+
+In both Clients, connect and choose **3**.
+
+The first Client to ask opens its board showing "Waiting for an opponent...".
+When the second Client asks, the **Server pairs them**, creates the game,
+assigns one White and one Black, and tells both that it has started. Closing the
+window while still waiting cancels the search.
+
+The Server owns the game. A click sends it a request and nothing on the board
+changes; the piece moves only when the Server sends back a position in which it
+has moved. So a move made out of turn, or one that is not legal, simply does
+nothing on the board — the reason appears in the status panel and on the
+Server's console.
+
+- **Offer Draw** travels through the Server and appears only on the opponent's
+  window. Accepting ends the game as a draw on both; declining is reported back
+  to whoever offered.
+- **Resign** asks for confirmation on the resigning player's window only, and
+  the Server then tells both Clients the result.
+- Closing a board window during a game concedes it, and the opponent is told.
+- If a Client disconnects, the other is told the game has ended because the
+  opponent disconnected — not that they resigned.
+
+## 9. Several Clients and several games at once
+
+The Server supports any number of connected Clients and any number of
+independent games running at the same time. To see it:
+
+1. Start one Server.
+2. Start **four** Clients and connect all of them.
+3. Choose Online Game in the first two — they are paired into game 1.
+4. Choose Online Game in the other two — they are paired into game 2.
+
+Both games can then be played simultaneously. The Server's console shows each
+game by number, and every move it logs names the game it belongs to. Nothing
+done in one game reaches the other: each is validated separately, and an update
+is only ever sent to the two Clients playing that game. A Client disconnecting
+ends its own game and leaves the other running.
+
+## 10. How Stockfish is integrated
+
+Stockfish is **a separate program, not a library**. It is included as
+`stockfish/stockfish.exe` (Stockfish 19, release tag `sf_19`, Windows x86-64
+universal build), together with its GPL licence in `stockfish/Copying.txt`,
+which is required when redistributing the binary.
+
+When a Bot game starts, the Client launches that executable as a **child
+process** with two pipes — one to its standard input, one from its standard
+output — and talks to it in **UCI**, the plain-text protocol chess engines use.
+The Client sends the position and a time limit, and Stockfish answers with a
+line such as `bestmove e2e4`. Nothing is shared but those two pipes. The path is
+resolved relative to the running executable, never as an absolute path, so the
+project works from any folder.
+
+Stockfish **chooses the Bot's move and nothing else.** Its answer is a string,
+which this project converts to a move and puts through exactly the same legality
+check a human's mouse click goes through. Move legality, whose turn it is, and
+the result of the game all stay in this project's own code. The engine process
+is started when the game begins and shut down when it ends, so it never outlives
+the Client.
+
+You can confirm it really is a separate process: start a Bot game and look in
+Task Manager's **Details** tab, where `stockfish.exe` appears while the game is
+running and disappears when the Client closes.
+
+## 11. Verifying it (optional)
+
+Three test programs are included under `tests/`. None of them is part of the
+Client or the Server — each has its own `main()` and none is picked up by the
+build commands in section 2.
+
+**The chess rules**, checked with perft, which plays every legal move to a given
+depth and counts the positions reached. The counts for the standard test
+positions are published and agreed on across chess engines, so matching them is
+real evidence rather than a self-written test passing:
 
 ```bash
-g++ -std=c++17 -O2 -Icommon common/*.cpp tests/perft_main.cpp -o perft.exe \
-    -lsfml-network -lsfml-system
+g++ -std=c++17 -O2 -Icommon common/*.cpp tests/perft_main.cpp -o perft.exe -lsfml-network -lsfml-system
 ./perft.exe
 ```
 
-(`common/` holds the protocol message definitions as well as the rules, so
-anything built from `common/*.cpp` links SFML Network even when, as here, it
-never opens a socket.)
+All 26 cases pass, about 15 million positions.
 
-All 26 cases pass — roughly 15 million positions. Re-run it after any change
-under `common/`. `tests/` is a development tool and is not part of the
-submission.
-
-### Verifying the Bot's difficulty levels
-
-The three levels are checked by making them play each other, so the difference
-is measured rather than judged by eye:
+**The Bot's difficulty levels**, checked by making them play each other, so the
+difference is measured rather than judged by eye:
 
 ```bash
-g++ -std=c++17 -O2 -Icommon -Iclient common/*.cpp client/StockfishEngine.cpp \
-    client/BotDifficulty.cpp client/ConsoleInput.cpp tests/bot_match.cpp \
-    -o bot_match.exe -lsfml-network -lsfml-system
+g++ -std=c++17 -O2 -Icommon -Iclient common/*.cpp client/StockfishEngine.cpp client/BotDifficulty.cpp client/ConsoleInput.cpp tests/bot_match.cpp -o bot_match.exe -lsfml-network -lsfml-system
 ./bot_match.exe
 ```
 
-Each pairing is played from both colours, so a win cannot be explained by
-moving first. The stronger level wins all six games by checkmate. Every engine
-move is played through `ChessGame::makeMove`, so the run also confirms our own
-rules accept everything a real engine produces.
+Each pairing is played from both colours, so a win cannot be explained by moving
+first. The stronger level wins all six games by checkmate.
 
-### Verifying the server and the protocol
-
-This one connects as several clients at once and checks the server's replies,
-which is how the things that cannot be seen by playing a single game get
-tested: two games running independently, a client refused when it asks about
-somebody else's game, moves rejected on the server, disconnections, and
-malformed messages. It needs a server to talk to, so start one first:
+**The Server and the protocol**, checked by connecting as several Clients at
+once — which is how the things that cannot be seen by playing one game get
+tested: two independent games, a Client refused when it asks about another
+Client's game, moves rejected by the Server, disconnections, and malformed
+messages. It needs a Server to talk to:
 
 ```bash
-g++ -std=c++17 -O2 -Icommon common/*.cpp tests/protocol_test.cpp \
-    -o protocol_test.exe -lsfml-network -lsfml-system
+g++ -std=c++17 -O2 -Icommon common/*.cpp tests/protocol_test.cpp -o protocol_test.exe -lsfml-network -lsfml-system
 ./server.exe 53100            # one window
 ./protocol_test.exe 53100     # another
 ```
 
-81 checks, all passing. It exits 0 only if every one of them did.
+81 checks; it exits 0 only if every one of them passed.
 
-## Stockfish
-
-Stockfish 19 (release tag `sf_19`), Windows x86-64 **universal** build, in
-`stockfish/`:
-
-- `stockfish/stockfish.exe` — the engine, run as a separate process
-- `stockfish/Copying.txt` — GNU GPL v3, required when redistributing the binary
-- `stockfish/AUTHORS`
-
-The universal build picks the best instruction set for the host CPU at runtime,
-so it runs on any x86-64 Windows machine without choosing a per-CPU variant.
-
-Stockfish is launched by a path **relative to the executable**, never an
-absolute one. It selects the Bot's move only; move legality and game state
-remain the responsibility of this project.
-
-SHA-256 of `stockfish.exe`:
-`45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0`
-
-## Running
-
-### Runtime DLLs
-
-The executables link dynamically against SFML and the MinGW runtime, so
-Windows must be able to find those DLLs. Either run from a shell that has
-`C:\msys64\ucrt64\bin` on `PATH` (the MSYS2 UCRT64 shell does), or copy the
-DLLs next to the executables. Collect them from **both** binaries — they do not
-need the same set:
-
-```bash
-ldd client.exe server.exe | grep -i '/ucrt64/bin' | awk '{print $3}' | sort -u \
-    | xargs -I{} cp -u {} .
-```
-
-There are 19 of them. Collecting from `gui_example.exe` alone is not enough: it
-does no networking, so it misses `libsfml-network-3.dll`, and `server.exe` then
-dies the moment it is launched — with **no error message at all**, just an exit
-code of `0xC0000135`, "DLL not found". The graphics DLLs are equally invisible
-to `server.exe`, which does not link them.
-
-Without the DLLs, double-clicking an executable fails with
-"libsfml-graphics-3.dll was not found" or dies silently as above.
-
-**For submission:** the required DLLs must sit beside `client.exe` and
-`server.exe` in the zip, otherwise the project will not run on the checker's
-machine. They are excluded from git but must be included in the zip.
-
-### Working directory
-
-Start the executables **from the project root**. `ChessFrontend.cpp` looks for
-the piece images relative to the current working directory — it tries
-`ProvidedGUI/assets/`, then `assets/`, then the same two paths one and two
-levels up. Launched from anywhere else the board renders lettered placeholder
-squares instead of pieces.
-
-## Folder layout
+## 12. Folder layout
 
 ```text
 .
-├── ProvidedGUI/          supplied, not modified
+├── client.exe            the Client
+├── server.exe            the Server
+├── *.dll                 the 19 runtime DLLs
+├── common/               chess rules and protocol, compiled into both programs
+├── client/               console screens, GUI wiring, Bot, client networking
+├── server/               listener, matchmaking, hosted games
+├── tests/                the three verification programs
+├── ProvidedGUI/          the supplied GUI, unmodified
 │   ├── ChessFrontend.hpp
 │   ├── ChessFrontend.cpp
 │   └── assets/           12 piece images
-├── Example/
-│   └── main.cpp          supplied GUI demo
-├── common/               chess rules, shared by both programs
-├── client/               console screens, GUI wiring, Bot, client networking
-├── server/               server sources
-├── tests/                perft, Bot-match and protocol harnesses; not submitted
-├── stockfish/            Stockfish 19 engine + GPL licence
-├── build_example.bat     supplied
-├── GUI_USAGE.md          supplied GUI API reference
+├── Example/main.cpp      the supplied GUI demo, unmodified
+├── build_example.bat     supplied, unmodified
+├── GUI_USAGE.md          the supplied GUI API reference
+├── stockfish/            Stockfish 19 engine, its licence and authors
 └── README.md
 ```
 
-`client/` still holds a `.gitkeep` so git tracks the directory while it is
-empty. Delete it once real sources are added.
+`ProvidedGUI/`, `Example/`, `GUI_USAGE.md` and `build_example.bat` are exactly
+as supplied and have not been modified.
+
+SHA-256 of `stockfish/stockfish.exe`:
+`45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0`

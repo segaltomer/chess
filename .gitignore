@@ -5,6 +5,11 @@
 *.a
 build/
 
+# The submission archive and any staging folder for it. The finished zip is
+# 82 MB, most of it the Stockfish binary, and GitHub rejects pushes over 100 MB
+# anyway - it is built from the whitelist in docs/PLAN.md when needed.
+*.zip
+
 # Chess engine binary (shipped with the submission, not tracked here)
 stockfish*
 

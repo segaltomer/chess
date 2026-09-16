@@ -5,9 +5,18 @@ of the last one can read this and know exactly where things stand.
 
 ---
 
-**Phase:** 6 — the quality pass (§71-80). **Done.** Phases 1-5 are done.
-**Next up: Phase 7, submission (§82-84)** — and the one thing that needs a
-second computer, §25.
+**Phase:** 7 — submission (§82-84). **All but the final zip is done.**
+Phases 1-6 are done. **87 of the 89 requirements are complete.**
+
+**The two that are not, and what each needs:**
+
+1. **§25 — a second computer.** Server and one Client here, a second Client on
+   another machine on the same network, using the LAN address the Server prints.
+   The student asked to be reminded of this at the end; this is that reminder.
+   Nothing in the code assumes one machine, and two Clients on this one already
+   play each other, but the requirement asks for two machines.
+2. **§84 — the student's ID number**, for the zip filename. Everything else is
+   staged and verified.
 
 **In progress:** nothing.
 
@@ -181,21 +190,35 @@ of turn does nothing, a draw offer appears only on the other window, resigning
 ends it on both, and closing one client mid-game ends the other's game with
 "disconnected" rather than "resigned".
 
-## Next step — Phase 7, submission (§82-84)
+## Phase 7 — what has been checked
 
-The remaining work is packaging, plus the one test that needs another machine.
+**The submission was staged and run, not just assembled.** Everything on the
+whitelist in `docs/PLAN.md` was copied into a clean folder and then run there
+**with MSYS2 removed from `PATH`** — which is the real test of whether the 19
+bundled DLLs are the right ones:
 
-1. **§25 on a second computer.** The student asked to be reminded of this at the
-   end; it is the first item of Phase 7 in `docs/PLAN.md`. Server and one Client
-   here, a second Client on another machine, using the LAN address the Server
-   prints. Nothing else about online play is unverified.
-2. Go through `docs/REQUIREMENTS.md` and tick all 89 against the code.
-3. Build the zip from the whitelist in `docs/PLAN.md` — copy items in, never
-   copy the folder and delete. 19 DLLs, both executables, Stockfish.
-4. **Settle the upload size early.** `stockfish.exe` alone is 103 MB, so the zip
-   will exceed 100 MB. §82 requires the binary, so if the submission system caps
-   the size the lecturer has to say how he wants it delivered. It is the one
-   item here that more work cannot solve.
+- `server.exe` starts and prints both addresses and the port.
+- `client.exe` connects, reaches the main menu and exits cleanly.
+- A Bot game launches `stockfish.exe` **from the staged folder's own
+  `stockfish/`**, which is the proof that the path is resolved relative to the
+  executable rather than hardcoded. No orphan process is left behind.
+
+**The zip fits after all.** This had been flagged as a possible blocker needing
+the lecturer. It is not: `stockfish.exe` is 98 MB but compresses, and the whole
+submission comes to **82.3 MB** zipped, 110 MB unpacked.
+
+**`tests/` now ships**, reversing the earlier decision. §20 asks the Bot's
+difficulty levels to be *demonstrable*, and `bot_match` is what demonstrates
+them; and the README documents all three harnesses, so omitting them would mean
+documenting commands for files the checker does not have. Reasoning is in
+`docs/PLAN.md`.
+
+## The last step, once the ID is known
+
+Build the zip from the whitelist by copying items in — never by copying the
+project folder and deleting. The PDF asks for the files "in a folder named with
+your ID", so put everything inside one top-level folder of that name and call
+the archive `<ID>.zip`; that satisfies both that wording and §84's.
 
 ## Environment notes for the next session
 

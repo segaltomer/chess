@@ -147,18 +147,27 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
       the LAN address the server prints. It is the only requirement that cannot
       be checked on one machine, and it is graded. Everything else about online
       play is already verified.
-- [ ] README covers every item in §83
-- [ ] `client.exe`, `server.exe`, Stockfish binary, and the 19 DLLs present
-- [ ] No absolute paths anywhere in the source
-- [ ] Cleanup pass — see the whitelist below. Nothing in the zip that the
-      requirements do not ask for.
-- [ ] Zip named `<your ID>.zip` (§84)
-- [ ] **Check the zip fits the upload limit.** `stockfish.exe` alone is 103 MB,
-      so the finished zip will exceed 100 MB. §82 requires the binary, so if
-      the submission system caps upload size, the lecturer has to say how he
-      wants Stockfish delivered. Worth settling early, since it is the one
-      item here that cannot be solved by doing more work.
-- [ ] Final check: unzip somewhere else and run it from there
+- [x] README covers every item in §83 — rewritten for the checker: compiling,
+      running the Server, where the address and port appear, running a Client
+      and connecting, a section for each of the three modes, several Clients
+      and concurrent games, how Stockfish is integrated, and the environment
+      requirements
+- [x] `client.exe`, `server.exe`, Stockfish binary, and the 19 DLLs present
+- [x] No absolute paths anywhere in the source
+- [x] Cleanup pass — the staged tree is built from the whitelist below by
+      copying in, and holds nothing else
+- [x] **The zip fits, so this needs nothing from the lecturer.** It was flagged
+      as a possible blocker and is not: `stockfish.exe` is 98 MB but compresses
+      well, and the whole submission comes to **82.3 MB** — under a 100 MB cap
+      whichever way a megabyte is counted. 110 MB unpacked.
+- [x] Final check: the staged copy was run **with MSYS2 removed from `PATH`**,
+      which is the real test of the bundled DLLs. The Server starts and prints
+      its addresses, a Client connects and reaches the menu, and a Bot game
+      launches `stockfish.exe` from the staged folder's own `stockfish/` —
+      proving the path is relative to the executable — leaving no orphan behind.
+- [ ] Zip named `<your ID>.zip` (§84) — needs the ID number. The PDF asks for
+      the files "in a folder named with your ID", so the zip should hold a
+      single top-level folder of that name, which satisfies both readings.
 
 ### What the zip contains — a whitelist, not a blacklist
 
@@ -172,22 +181,31 @@ Example/                  his demo, unmodified
 GUI_USAGE.md              his file
 build_example.bat         his file
 common/  client/  server/ our sources - .h and .cpp only
+tests/                    the three verification programs - see below
 client.exe  server.exe    §82
-stockfish/                stockfish.exe + Copying.txt (GPL - required)
+stockfish/                stockfish.exe + Copying.txt + AUTHORS (GPL - required)
 *.dll                     the 19 runtime DLLs
 ```
+
+**`tests/` ships, which reverses the earlier decision to leave it out.** Two
+reasons. §20 asks that the Bot's difficulty levels be *demonstrable*, and
+`bot_match` is the thing that demonstrates them — shipping the demonstration is
+directly responsive to the word the requirement uses. And the README describes
+all three harnesses, so leaving them out would mean documenting commands that
+refer to files the checker does not have, which is worse than the alternative.
+
+They cannot interfere with anything: each has its own `main()`, and none is
+picked up by `common/*.cpp`, `client/*.cpp` or `server/*.cpp`, so the two
+documented build commands are unaffected.
 
 ### Explicitly not in the zip
 
 - `.git/` — the repo. Keep it on disk, keep pushing it; it just isn't submitted.
 - `.vscode/`, `.claude/` — editor and tool local state.
 - `CLAUDE.md`, `docs/` — our working notes. They stay in the repo.
-- `tests/` — the perft harness that verifies the rules engine, the Bot match
-  that verifies the difficulty levels, and the protocol test that verifies the
-  Server. Not Client or Server source, each has its own `main()`, and none is
-  picked up by the `common/*.cpp`, `client/*.cpp` or `server/*.cpp` build
-  commands. They stay in the repo because they are how a change to the rules,
-  the difficulty levels or the protocol gets re-checked.
+- `perft.exe`, `bot_match.exe`, `protocol_test.exe` — the built test binaries.
+  The `tests/` sources ship; their executables do not, since §82 asks only for
+  the Client and the Server, and the README gives the commands to build them.
 - `.gitignore` — meaningless without `.git/`.
 - `gui_example.exe` — his demo's binary, not asked for.
 - `*.o`, `*.a`, any build intermediates.
