@@ -1,7 +1,12 @@
 # C++ Chess — Client / Server
 
-Final project for the C++ course. This is the **setup skeleton only**: no chess
-rules, no networking and no protocol are implemented yet.
+Final project for the C++ course. **Work in progress.** The full chess rules
+engine is implemented and verified in `common/`, and `server/` currently listens
+for connections and tracks them. The Client, the Bot and the online protocol are
+not written yet.
+
+This file is rewritten for submission in Phase 7, where §83 requires it to walk
+the checker through compiling and running every mode.
 
 ## Build environment
 
@@ -42,13 +47,41 @@ g++ -std=c++17 common/*.cpp client/*.cpp ProvidedGUI/ChessFrontend.cpp -IProvide
     -lsfml-graphics -lsfml-window -lsfml-system -lsfml-network
 ```
 
-Server (once `server/` contains sources):
+Server:
 
 ```bash
 g++ -std=c++17 common/*.cpp server/*.cpp -o server.exe -lsfml-network -lsfml-system
 ```
 
 The server links no `sfml-graphics`, since it displays no GUI.
+
+### Running the server
+
+```bash
+./server.exe          # listens on the default port, 53000
+./server.exe 53001    # or a port of your choosing
+```
+
+It prints the port and the two addresses a Client can use — `127.0.0.1` for a
+Client on the same machine, and this machine's LAN address for a Client on
+another. Those are what you type into the Client's connection screen. It then
+waits, logging every connection and disconnection, until you close it.
+
+### Verifying the chess rules
+
+The rules engine is checked with **perft**, which plays every legal move to a
+given depth and counts the positions reached. The counts for the six standard
+test positions are published and agreed on across chess engines, so matching
+them all is meaningful evidence rather than a self-written test passing.
+
+```bash
+g++ -std=c++17 -O2 -Icommon common/*.cpp tests/perft_main.cpp -o perft.exe
+./perft.exe
+```
+
+All 26 cases pass — roughly 15 million positions. Re-run it after any change
+under `common/`. `tests/` is a development tool and is not part of the
+submission.
 
 ## Stockfish
 
@@ -76,14 +109,22 @@ SHA-256 of `stockfish.exe`:
 The executables link dynamically against SFML and the MinGW runtime, so
 Windows must be able to find those DLLs. Either run from a shell that has
 `C:\msys64\ucrt64\bin` on `PATH` (the MSYS2 UCRT64 shell does), or copy the
-DLLs next to the executable:
+DLLs next to the executables. Collect them from **both** binaries — they do not
+need the same set:
 
 ```bash
-ldd gui_example.exe | grep -i '/ucrt64/bin' | awk '{print $3}' | xargs -I{} cp -u {} .
+ldd client.exe server.exe | grep -i '/ucrt64/bin' | awk '{print $3}' | sort -u \
+    | xargs -I{} cp -u {} .
 ```
 
-Without this, double-clicking the executable fails with
-"libsfml-graphics-3.dll was not found" and similar.
+There are 19 of them. Collecting from `gui_example.exe` alone is not enough: it
+does no networking, so it misses `libsfml-network-3.dll`, and `server.exe` then
+dies the moment it is launched — with **no error message at all**, just an exit
+code of `0xC0000135`, "DLL not found". The graphics DLLs are equally invisible
+to `server.exe`, which does not link them.
+
+Without the DLLs, double-clicking an executable fails with
+"libsfml-graphics-3.dll was not found" or dies silently as above.
 
 **For submission:** the required DLLs must sit beside `client.exe` and
 `server.exe` in the zip, otherwise the project will not run on the checker's
@@ -107,14 +148,15 @@ squares instead of pieces.
 │   └── assets/           12 piece images
 ├── Example/
 │   └── main.cpp          supplied GUI demo
-├── common/               shared rules + protocol
-├── client/               client sources
+├── common/               chess rules, shared by both programs
+├── client/               client sources (not written yet)
 ├── server/               server sources
+├── tests/                perft harness; not submitted
 ├── stockfish/            Stockfish 19 engine + GPL licence
 ├── build_example.bat     supplied
 ├── GUI_USAGE.md          supplied GUI API reference
 └── README.md
 ```
 
-`client/` and `server/` each hold a `.gitkeep` so git tracks the directory
-while it is still empty. Delete those once real sources are added.
+`client/` still holds a `.gitkeep` so git tracks the directory while it is
+empty. Delete it once real sources are added.

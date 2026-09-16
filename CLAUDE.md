@@ -43,8 +43,12 @@ g++ -std=c++17 common/*.cpp server/*.cpp -o server.exe \
 4. Assets are resolved relative to the **current working directory**
    (`ProvidedGUI/assets/`, then `assets/`, then one and two levels up), so
    executables must be launched from the project root.
-5. Runtime needs 18 MinGW/SFML DLLs beside the executables. They are
-   gitignored but **must be included in the submission zip**.
+5. Runtime needs 19 MinGW/SFML DLLs beside the executables. They are
+   gitignored but **must be included in the submission zip**. (It was 18 until
+   the server was written: the original set was gathered from `gui_example.exe`,
+   which does no networking, so `libsfml-network-3.dll` was missing and
+   `server.exe` died on launch with no message. The README's `ldd` command now
+   collects from `client.exe` and `server.exe` instead.)
 
 ## Working documents — read these first
 

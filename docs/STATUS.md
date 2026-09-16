@@ -5,13 +5,20 @@ of the last one can read this and know exactly where things stand.
 
 ---
 
-**Phase:** 1 — chess rules in `common/` (§26-39). **COMPLETE.**
+**Phase:** 2 — Client, Local Game. Phase 1 is complete.
 
-**In progress:** nothing. All thirteen Phase 1 items are ticked and committed,
-and `docs/REVISION.md` has the phase's question-and-answer entries.
+**In progress:** nothing.
 
-**Last completed:** item 13, the game result and reason for the GUI (§39),
-together with resignation (§37) and draw by agreement (§38) at the rules level.
+**Last completed:** Phase 2's first item, the minimal Server (§11) —
+`server/Server.h/.cpp` and `server/main.cpp`. It binds a port, prints the
+addresses a Client should use, accepts any number of clients, logs connections
+and disconnections, and survives both.
+
+Tested by running it and connecting three real TCP clients: two at once, one
+sending an unknown message, disconnecting in a different order than they
+connected, and a new client arriving after an earlier one left. Also tested
+with a non-numeric port argument, an out-of-range port, and a second server
+told to take a port already in use.
 
 **Files mid-edit:** none. Working tree clean.
 
@@ -51,17 +58,25 @@ no GUI, no Client and no Server. That starts in Phase 2.
 
 ## Next step
 
-Phase 2, first item: the **minimal Server** — listen on a port, accept
-connections, print the listening IP and port to the console (§11). It comes
-first because §8 makes the Client's main menu unreachable until a connection
-succeeds, so without a server to connect to, nothing else in Phase 2 can be
-tested. Matchmaking and online games stay in Phase 4.
+Phase 2, second item: the Client's **console connection screen** (§7) — ask for
+the server IP and port, connect, and on failure give a clear message (§9) and
+the choice to retry, change the IP, change the port, or exit (§10). The main
+menu (§8, §12) is only reachable once a connection has succeeded.
 
-Then the console connection screen (§7), its error handling (§9-10), the main
-menu (§8, §12), and the GUI event loop wired to `ChessGame` for a Local game.
+After that: the GUI event loop wired to `ChessGame`, then the Local Game
+itself (§13, §17), resignation with its Confirm/No dialog (§53-56), and the
+draw offer shown to the opponent on the same client (§48-49, §51-52).
 
-Phase 2 is the first point where the student has to run it and look at it —
-see `docs/CLAUDE_CODE.md` §4.
+**This is the first point where a person has to look at the screen.** The
+rules engine was verifiable by counting positions; a GUI is not. See
+`docs/CLAUDE_CODE.md` §4 — clicking pieces and reporting what happened is the
+part only the student can do.
+
+To run the server while testing a client:
+
+    ./server.exe
+
+It prints the IP and port to type into the connection screen.
 
 ## Environment notes for the next session
 

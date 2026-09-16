@@ -28,7 +28,7 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 
 ## Phase 2 — Client, Local Game (§7-17, 48-56)
 
-- [ ] **Minimal Server first:** listen on a port, accept connections, print the
+- [x] **Minimal Server first:** listen on a port, accept connections, print the
       listening IP and port to the console (§11). Nothing else — matchmaking and
       online games come in Phase 4. Without this there is no server to connect
       to, and §8 makes the main menu unreachable until a connection succeeds,

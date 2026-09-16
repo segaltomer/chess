@@ -325,3 +325,48 @@ Resignation takes the colour rather than assuming the side to move, because a
 player may resign at any time, including on the opponent's turn (§53). The
 detail string does not need to store who resigned: the resigner is the loser,
 so the result already says which.
+
+---
+
+## The minimal Server · `server/Server`, `server/main.cpp` · §11
+
+`Server` binds a port in its constructor — so a `Server` that exists is a
+`Server` that is listening, and there is no half-built state where the object
+exists but is not serving. If the port cannot be bound it throws, and `main`
+turns that into a readable line rather than a stack trace. That is almost
+always another program already holding the port, including a second copy of
+this server.
+
+The loop is one thread around an `sf::SocketSelector`. The selector is told
+about the listening socket and every connected client, and `wait()` sleeps
+until at least one of them has something to say. So an idle server with fifty
+clients uses no processor time at all, without a thread per client.
+
+**Why one thread** (DESIGN decision 5): with no state shared between threads
+there are no locks, and a whole family of crash becomes impossible. §64 says a
+client disconnecting must never bring the server down, and thread-per-client
+over unlocked shared game state is the classic way to fail exactly that.
+
+§11 is why it prints two addresses. `127.0.0.1` works for a Client on the same
+machine; a Client on another machine needs this machine's LAN address, which is
+what `sf::IpAddress::getLocalAddress()` returns. §25 requires the second case
+to work, and a player cannot type an address nobody has told them.
+
+Clients live in a `std::vector` with id numbers from the first line of code,
+even though there is nothing yet for a second client to do. §60 forbids
+assuming a single game exists on the server, and that is far cheaper to honour
+from the start than to retrofit around code written for one.
+
+**The tricky part:** a closed socket reports itself *ready to read* forever. So
+a client that has gone away must be removed from the selector as well as from
+the list — miss that and the loop spins at 100% CPU on a socket that will never
+have anything to say. `receive` returning `Disconnected` is how that is caught.
+
+**What actually went wrong:** `server.exe` built cleanly and then died
+instantly on launch printing nothing whatsoever — exit code `0xC0000135`. The
+19 runtime DLLs in the project folder had been collected from
+`gui_example.exe`, which does no networking, so `libsfml-network-3.dll` was
+never among them. Windows reports a missing DLL by killing the process before
+`main` runs, with no message on the console. Worth remembering, because the
+symptom looks like a crash in code that has not executed yet. The README's
+`ldd` line now collects from `client.exe` and `server.exe`.
