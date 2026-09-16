@@ -36,11 +36,16 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 - [x] Console connection screen: IP + port (§7)
 - [x] Clear errors for bad IP, bad port, server down, failed connect (§9)
 - [x] Retry / change IP / change port / exit after failure (§10)
-- [ ] Main menu after successful connect only (§8, §12)
-- [ ] GUI event loop wired to the rules engine
-- [ ] Local Game: two humans, one client, validated locally (§13, §17)
-- [ ] Resign with Confirm/No dialog (§53-56)
-- [ ] Draw offer shown to opponent on the same client (§48-49, §51-52)
+- [x] Main menu after successful connect only (§8, §12)
+- [x] GUI event loop wired to the rules engine
+- [x] Local Game: two humans, one client, validated locally (§13, §17)
+- [x] Resign with Confirm/No dialog (§53-56)
+- [x] Draw offer shown to opponent on the same client (§48-49, §51-52)
+- [ ] **Student to confirm by playing it.** The five items above are written
+      and build, and the window opens and runs, but nobody has clicked a piece
+      yet. Play a full game: a normal move, an illegal move, check, a
+      promotion, castling, en passant, resign (both Confirm and No), and a draw
+      offer (both Accept and Decline). See `docs/CLAUDE_CODE.md` §4.
 
 ## Phase 3 — Bot (§18-20, 43-47)
 

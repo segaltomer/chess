@@ -9,26 +9,26 @@ of the last one can read this and know exactly where things stand.
 
 **In progress:** nothing.
 
-**Last completed:** Phase 2 items 2-4 — the Client's console connection screen
-(§7), its error messages (§9), and the retry / change address / change port /
-exit choices after a failure (§10). New files `client/ConsoleInput.h/.cpp`,
-`client/ServerConnection.h/.cpp`, `client/ConnectionScreen.h/.cpp`,
-`client/main.cpp`.
+**Last completed:** Phase 2 items 5-9 — the main menu (§8, §12), the GUI event
+loop, the Local Game (§13, §17), resignation with its Confirm/No dialog
+(§53-56), and the draw offer answered on the same client (§48-49, §51-52). New
+files `client/MainMenu.h/.cpp` and `client/LocalGame.h/.cpp`.
 
-Before that, Phase 2's first item: the minimal Server (§11).
+Everything in Phase 2 is written and builds. **One item is deliberately left
+unticked: nobody has played a game yet.**
 
-**Verified by running both programs together**, driving the client's console
-from a file: connecting successfully on the first try; a wrong port then
-"change the port" then connecting; an unreachable address then "change the
-address" then connecting; "try again" twice then exit; and rubbish typed at
-every prompt. The server's log confirms each connection and each clean
-disconnection. The server was also tested with a non-numeric port argument, an
-out-of-range port, and a second copy told to take a port already in use.
+**What has been verified, by running both programs together:** the connection
+screen's success path and all three recovery paths; rubbish typed at every
+prompt; the menu appearing only after a connection succeeds; each menu option
+including bad choices and Exit; and the board window opening, staying
+responsive, and running its loop at the GUI's own 60fps limit rather than
+spinning. The server's log confirms every connection and clean disconnection.
+
+**What has NOT been verified: anything that needs a mouse.** No piece has been
+clicked. The move, promotion, resign and draw paths are written against the
+tested rules engine and they compile, but they have never been exercised.
 
 **Files mid-edit:** none. Working tree clean.
-
-**Note:** `client.exe` currently exits as soon as it connects. That is the next
-item, not a fault — the main menu is what comes after the gate.
 
 ## What exists now
 
@@ -64,19 +64,46 @@ perft is the regression test that matters, and it is the one kept.
 **Not yet exercised by a human.** Nothing has been seen on screen yet; there is
 no GUI, no Client and no Server. That starts in Phase 2.
 
-## Next step
+## Next step — this one is the student's
 
-Phase 2, fifth item: the **main menu** (§8, §12) — Local Game, Player vs Bot,
-Online Game, Exit — reachable only after the connection screen has succeeded,
-which it now enforces.
+**Play a local game and report what happens.** Everything else is blocked on
+it: Phase 3 builds the Bot on top of this same board loop, so a fault here
+would be inherited.
 
-Then the GUI event loop wired to `ChessGame`, the Local Game itself (§13, §17),
-resignation with its Confirm/No dialog (§53-56), and the draw offer shown to
-the opponent on the same client (§48-49, §51-52).
+    ./server.exe          in one console
+    ./client.exe          in another, from the project root
 
-Worth deciding when the menu is built: what the Client does if the player picks
-Local Game or Player vs Bot and the connection then drops. Neither mode needs
-the Server at all (§17-18), so losing it mid-game should not disturb them.
+Connect to 127.0.0.1 on the port the server printed, choose Local Game, and
+try each of these:
+
+- an ordinary move, and an illegal one (the piece should simply stay put)
+- moving a piece when it is not that colour's turn
+- putting a king in check — "Check" should appear in the status area
+- a pawn reaching the far rank — the promotion dialog should appear, and all
+  four pieces should work
+- castling, both sides
+- en passant
+- Resign, then "No" — the game must carry on
+- Resign, then "Confirm" — the other colour should win, and the summary should
+  say who resigned
+- Offer Draw, then Decline — play continues
+- Offer Draw, then Accept — the game should end as a draw
+- closing the board window mid-game — it should return to the console menu
+
+Report anything that looks wrong in the words of what you saw, as
+`docs/CLAUDE_CODE.md` §3 describes.
+
+## After that
+
+Phase 3, the Bot. Two things to settle when it starts:
+
+- `LocalGame` and `BotGame` will differ in almost nothing — only in who
+  supplies Black's move. The `Game` base class of DESIGN decision 2 should be
+  extracted then, when there are two real cases to generalise from, rather than
+  guessed at now from one.
+- What the Client does if the connection drops during a Local or Bot game.
+  Neither mode needs the Server at all (§17-18), so losing it should not
+  disturb them. Phase 5 covers it properly.
 
 **This is the first point where a person has to look at the screen.** The
 rules engine was verifiable by counting positions; a GUI is not. See

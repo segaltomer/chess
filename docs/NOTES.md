@@ -417,3 +417,60 @@ the console window is closed or input is piped from a file that runs out.
 **The connect timeout** is five seconds. Without one, an address with no
 machine at it can take most of a minute to give up, which is indistinguishable
 from a hung program.
+
+---
+
+## The main menu and the Local Game · `client/MainMenu`, `client/LocalGame` · §8, §12-13, §17, §39, §48-56
+
+The Local Game is where the rules engine finally meets the screen. The loop is
+the one `GUI_USAGE.md` documents — poll an event, react to it, render — and
+everything interesting is in the reacting.
+
+**Square numbering needed no conversion at all.** The GUI reports a click as a
+row and a column with row 0 meaning rank 8, which is exactly how the engine
+numbers its 64 squares. So a click becomes `squareIndex(row, col)` and that is
+the whole translation. That was the point of choosing the GUI's own indexing
+back in the representation commit; the payment for it comes here.
+
+**An illegal move needs no handling.** `makeMove` returns false and changes
+nothing, the board is redrawn from the unchanged position, and the piece simply
+appears not to have moved. There is no "undo" path because nothing was ever
+done — which is why `makeMove` was written to be all-or-nothing.
+
+**Promotion is the one move that takes two answers.** The player picks the
+squares, and only then the piece. So the from/to squares wait in
+`promotionFromSquare_`/`promotionToSquare_` while the dialog is up, and the
+move is only built and played once `PromotionSelected` arrives. The GUI's
+promotion overlay swallows every other click while it is open, so there is no
+way to wander off and leave a half-made move behind. The letter it sends —
+'Q', 'R', 'B', 'N' — is the same letter a white piece is drawn with, so
+`fromDisplayChar` already converts it.
+
+**Resignation is two steps on purpose** (§54-55). The GUI reports only that the
+button was clicked; it does not decide anything. Our code answers that by
+showing the confirmation dialog, and nobody actually resigns until
+`ResignConfirmed` arrives. `ResignCancelled` does nothing at all, which is the
+requirement.
+
+Because both players share one screen and one mouse, the player who resigns is
+taken to be the one whose turn it is. A player wanting to resign on their
+opponent's turn has to wait for their own — a limit of having a single Resign
+button, which is the button the provided GUI gives us.
+
+**The draw offer names both players** (§49). In an online game the offer
+appears on the other person's machine and there is no doubt who is being asked.
+Here both players are at the same window, so the dialog says "White offers a
+draw. Black, do you accept?" — otherwise the wrong person answers it.
+
+**The tricky part:** the game-over summary must be shown exactly once. Its
+close button hides the overlay and reports *no event at all*, so if the result
+were shown whenever `isOver()` is true, it would reappear on the very next
+frame and could never be dismissed. Hence `hasShownResult_`. Once the game ends
+the board input is switched off and the Offer Draw button is hidden, so the
+final position can be looked at but not disturbed; closing the window returns
+to the console menu.
+
+One small thing worth knowing: console messages printed just before the game
+loop are flushed explicitly. Nothing reads the console while a game is running,
+so an unflushed line can sit in the buffer, unseen, for as long as the board
+window stays open.
