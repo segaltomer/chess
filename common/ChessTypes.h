@@ -19,6 +19,13 @@ constexpr int H8_SQUARE = 7;
 constexpr int A1_SQUARE = 56;
 constexpr int H1_SQUARE = 63;
 
+// Starting files on the back rank. Castling is defined in terms of these, and
+// both Board (which performs the rook's jump) and Rules (which decides whether
+// castling is allowed) have to agree on them.
+constexpr int KING_START_COL = 4;
+constexpr int KING_SIDE_ROOK_COL = 7;
+constexpr int QUEEN_SIDE_ROOK_COL = 0;
+
 constexpr char EMPTY_DISPLAY_CHAR = '.';
 
 enum class Color { White, Black };
@@ -45,6 +52,9 @@ int squareIndex(int row, int col);
 
 bool isOnBoard(int row, int col);
 bool isValidSquare(int square);
+
+// The row a colour's pieces start on: 7 for White, 0 for Black.
+int backRankOf(Color colour);
 
 // 'K' 'Q' 'R' 'B' 'N' 'P' for White, the same letters lowercase for Black,
 // '.' for an empty square. This is the alphabet ChessFrontend::setBoard takes.

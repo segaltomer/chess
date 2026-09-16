@@ -16,6 +16,11 @@ namespace Rules {
 
 // Every move the colour could physically make, ignoring whether it leaves its
 // own king attacked. Only legalMoves() should normally need this.
+//
+// Castling is the one exception to "ignoring check": it is generated here with
+// its own conditions already applied, because §34 bans castling out of check
+// and across an attacked square, and neither is something the general filter
+// could notice afterwards. Its landing square is still left to that filter.
 std::vector<Move> pseudoLegalMoves(const Board& board, Color colour);
 
 // Whether any piece of `attackingColour` attacks `square`. The square may be

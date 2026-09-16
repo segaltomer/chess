@@ -18,10 +18,8 @@ constexpr char STARTING_POSITION[] =
     "PPPPPPPP"
     "RNBQKBNR";
 
-constexpr int KING_SIDE_ROOK_COL = 7;
-constexpr int QUEEN_SIDE_ROOK_COL = 0;
-
-// Where each rook lands once the king has castled past it.
+// Where each rook lands once the king has castled past it. The files the rooks
+// start on are shared with Rules and live in ChessTypes.h.
 constexpr int KING_SIDE_ROOK_CASTLED_COL = 5;
 constexpr int QUEEN_SIDE_ROOK_CASTLED_COL = 3;
 

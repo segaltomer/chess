@@ -119,17 +119,37 @@ void divide(const std::string& fen, int depth) {
 // The published positions this engine is currently checked against.
 //
 // From the starting position, no castling is reachable within four plies and
-// no en passant capture is available before the fifth, so these four depths
-// test movement, blocking, captures, check and the ban on moving into check
-// without depending on either special move. The rest of the standard suite —
-// Kiwipete and the four positions built to stress castling, en passant and
-// promotion — is added as those moves are implemented.
+// no en passant capture before the fifth, so those four depths test movement,
+// blocking, captures, check and the ban on moving into check without depending
+// on either special move.
+//
+// The other five are the standard perft suite, at depth 1 for now. Each has
+// "-" in its en passant field, so depth 1 cannot involve an en passant capture
+// however crowded the position is — while Kiwipete and the crowded middlegame
+// both offer castling at depth 1, so those counts do exercise it. The deeper
+// levels go in once en passant is generated.
 std::vector<PerftCase> suite() {
+    const std::string kiwipete =
+        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+    const std::string endgame = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1";
+    const std::string promotions =
+        "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+    const std::string crowded =
+        "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1";
+    const std::string steadyState =
+        "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
+
     return {
-        {"start position", STARTING_FEN, 1,      20},
-        {"start position", STARTING_FEN, 2,     400},
-        {"start position", STARTING_FEN, 3,    8902},
-        {"start position", STARTING_FEN, 4,  197281},
+        {"start position",      STARTING_FEN, 1,      20},
+        {"start position",      STARTING_FEN, 2,     400},
+        {"start position",      STARTING_FEN, 3,    8902},
+        {"start position",      STARTING_FEN, 4,  197281},
+
+        {"kiwipete",            kiwipete,     1,      48},
+        {"endgame",             endgame,      1,      14},
+        {"promotions",          promotions,   1,       6},
+        {"crowded middlegame",  crowded,      1,      44},
+        {"steady state",        steadyState,  1,      46},
     };
 }
 

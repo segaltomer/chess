@@ -7,29 +7,30 @@ of the last one can read this and know exactly where things stand.
 
 **Phase:** 1 — chess rules in `common/` (§26-39)
 
-**In progress:** nothing. Items 1-9 are committed.
+**In progress:** nothing. Items 1-10 are committed.
 
-**Last completed:** Phase 1 items 8-9, checkmate (§32) and stalemate (§33), in
-`common/Rules.h/.cpp` with thin forwarders on `ChessGame`.
+**Last completed:** Phase 1 item 10, castling with all six conditions (§34),
+generated in `common/Rules.cpp`.
 
-Verified so far: perft from the starting position matches the published counts
-at depths 1-4 (20 / 400 / 8,902 / 197,281); 31 assertions on turn order, check
-detection, pins, king safety and FEN parsing; 40 assertions across three real
-checkmates (fool's, back rank, smothered), two stalemates, and two in-check
-positions that are *not* mate.
+Verified so far: perft matches the published counts for the start position at
+depths 1-4 (20 / 400 / 8,902 / 197,281) and for all five standard suite
+positions at depth 1, including Kiwipete's 48 — which contains both castles;
+31 assertions on turn order, check, pins and FEN; 40 on checkmate and
+stalemate; 37 on castling, one per condition in both directions plus the
+b1-may-be-attacked case and the resulting piece placement for both colours.
 
 **Files mid-edit:** none. Working tree clean.
 
-**Next step:** Phase 1 item 10, castling with all its conditions (§34).
+**Next step:** Phase 1 item 11, en passant (§35). `Board` already performs the
+capture and already sets and clears the target square; what is missing is
+`PawnRules::appendCaptures` offering the move when `board.enPassantTarget()` is
+the square diagonally ahead. That is about six lines.
 
-Note on where it goes: castling is generated in `Rules`, **not** in `KingRules`
-with the other king moves. It has to be, because two of its conditions are
-about attacked squares — the king may not castle out of check, nor through a
-square the enemy attacks — and answering that needs `isSquareAttacked`, which
-lives in `Rules`. Having `PieceRules` call back into `Rules` would make the two
-mutually dependent. Generating castling one level up keeps the dependency
-one-way, and is honest besides: castling is a fact about a king, a rook and the
-check state together, not about how a king moves.
+With it the whole standard perft suite becomes meaningful, so the same commit
+should extend `tests/perft_main.cpp` to the full depths — start position to
+depth 5 (4,865,609), Kiwipete to 4 (4,085,603), and the other three to 4 or 5.
+That is the real proof the rules engine is right; expect it to take a minute or
+so to run.
 
 **Deliberately not done yet:** castling and en passant *generation* (items 10
 and 11 — `Board` already performs both, nothing yet offers them as moves), and

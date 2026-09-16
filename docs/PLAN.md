@@ -20,7 +20,7 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 - [x] Reject moves leaving own king in check (§31)
 - [x] Checkmate (§32)
 - [x] Stalemate (§33)
-- [ ] Castling, all conditions (§34)
+- [x] Castling, all conditions (§34)
 - [ ] En passant (§35)
 - [ ] Promotion, choice of Q/R/B/N (§36)
 - [ ] Game result + reason exposed for the GUI (§39)

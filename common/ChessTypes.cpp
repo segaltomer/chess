@@ -41,6 +41,11 @@ bool isValidSquare(int square) {
 }
 
 
+int backRankOf(Color colour) {
+    return (colour == Color::White) ? BOARD_SIZE - 1 : 0;
+}
+
+
 char toDisplayChar(const Piece& piece) {
     char letter = EMPTY_DISPLAY_CHAR;
 

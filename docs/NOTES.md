@@ -191,3 +191,34 @@ where the king has an empty square but every escape is attacked, and it calls
 mate in positions where some *other* piece can block the check or capture the
 checker. Asking "is the legal move list empty" is both simpler and correct,
 and it gets stalemate right at the same time instead of as a separate rule.
+
+---
+
+## Castling · `common/Rules` · §34
+
+Castling has six conditions and the code checks them in this order: the right
+still exists, both pieces are really on their squares, the squares between them
+are empty, the king is not in check, the king does not cross an attacked
+square, and the king does not land on one.
+
+The first two are `Board`'s job and were done in the representation commit — a
+right is lost when the king moves, when that rook moves, or when that rook is
+captured where it stands. The last one is free: `legalMoves` already plays
+every candidate move on a copy and rejects it if the mover's king ends up
+attacked, and for a castle `Board::applyMove` moves the rook too, so the test
+sees the real resulting position.
+
+**Why it is generated in `Rules` and not in `KingRules`** with the king's other
+moves: two of the conditions ask whether a square is attacked, and that answer
+lives in `Rules::isSquareAttacked`. If `KingRules` asked for it, `PieceRules`
+and `Rules` would depend on each other in a circle. Generating castling one
+level up keeps the dependency pointing one way — `Rules` uses `PieceRules`,
+never the reverse. It is also the truthful place for it: castling is a fact
+about a king, a rook and the check state together, not about how a king moves.
+
+**The tricky part:** the three "empty" squares and the three "not attacked"
+squares are different sets, and it is easy to use one list for both. Castling
+queen's side moves the rook from a1 across b1, c1 and d1, so all three must be
+empty — but the king only goes e1 → d1 → c1, so b1 may be attacked and the
+castle is still legal. A single loop over "the squares between" would wrongly
+forbid it. There is a test for exactly this case.
