@@ -88,6 +88,12 @@ Enter these in the Client's connection screen:
 Use `127.0.0.1` for a Client on the same computer, and the second address for a
 Client on another computer on the same network.
 
+If it reports that it cannot listen on the port, pick a different one. Besides
+another program already holding it, Windows reserves whole ranges of ports for
+its own use, and a server cannot bind inside one; `netsh int ipv4 show
+excludedportrange protocol=tcp` lists them. The default 53000 is outside them on
+a normal machine.
+
 It then runs until you close the window, logging every connection and
 disconnection, every entry to and exit from the matchmaking queue, every game
 created and who was assigned which colour, every move accepted or rejected and
