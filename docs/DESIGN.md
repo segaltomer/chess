@@ -80,9 +80,27 @@ holds the `ChessGame` for that match, because §22 says the Server validates.
 Local and Bot games hold their own, because §17–18 say the Client validates
 those. Each mode ends up with exactly the authority its requirement gives it.
 
-The `Game` hierarchy itself is built in Phase 2, once there is a GUI for it to
-talk to. `ChessGame` exists now because the rules engine needs an owner for the
-turn and the result.
+**As built (Phase 3).** `client/Game` is the base class and holds the whole
+shared loop: reading clicks, turning them into moves, the promotion dialog, the
+resign confirmation, the draw offer, and deciding when to show the result.
+`play()` is not virtual — subclasses cannot reimplement the parts that must
+behave identically in every mode (§6). They fill in four small hooks instead:
+
+| Hook | What it decides |
+|---|---|
+| `onGameStarted` | player names, whether Offer Draw belongs in this mode |
+| `onOpponentTurn` | how a non-human opponent takes its turn; empty for Local |
+| `resigningColour` | whose Resign button it is |
+| `onDrawOffered` | what an offer does; empty where offers do not apply |
+
+`LocalGame` is 30 lines and `BotGame` about 90; everything else is shared. The
+base class was deliberately **not** written in Phase 2, when only `LocalGame`
+existed — the seams were chosen in Phase 3, once `BotGame` gave a second real
+case to generalise from rather than a guess about one.
+
+`OnlineGame` joins them in Phase 4, and is the case that decided the shape
+above: it will override `onOpponentTurn` to read from the Server, and it will
+have no `ChessGame` of its own to mis-use.
 
 ---
 
@@ -187,8 +205,17 @@ it here would be decoration.
 ## 7. Positions are built from FEN
 
 **Decision:** `Board::fromFen` and `ChessGame::fromFen` read FEN, the standard
-one-line text notation for a chess position. There is no FEN *writer* until
-something needs one.
+one-line text notation for a chess position, and `ChessGame::toFen` writes it.
+
+> The writer was deliberately left out until something needed it. Phase 3 is
+> when that happened: `position fen ...` is how Stockfish is told where the
+> game stands. It also gave the reader a free test — every position now
+> round-trips, text to board to text.
+>
+> The half-move and full-move counters are written as a fixed `"0 1"` rather
+> than tracked. They exist for the fifty-move rule, which is not among the
+> required rules (§26-39) and is not implemented, so keeping them would be
+> state nothing ever reads.
 
 **Why:** two things need it, and one of them is the reason the rules engine can
 be trusted at all.

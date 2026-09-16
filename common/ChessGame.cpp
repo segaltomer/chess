@@ -27,6 +27,17 @@ ChessGame ChessGame::fromFen(const std::string& fen) {
 }
 
 
+std::string ChessGame::toFen() const {
+    const std::string sideToMoveField = (sideToMove_ == Color::White) ? "w" : "b";
+
+    return board_.placementFen()
+         + " " + sideToMoveField
+         + " " + board_.castlingFen()
+         + " " + board_.enPassantFen()
+         + " 0 1";
+}
+
+
 const Board& ChessGame::board() const {
     return board_;
 }

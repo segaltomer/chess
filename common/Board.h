@@ -64,6 +64,13 @@ public:
     // GUI without decoding it.
     std::array<char, SQUARE_COUNT> toDisplay() const;
 
+    // The three board-related fields of a FEN string, each the exact inverse of
+    // what fromFen reads. ChessGame assembles them with the side to move when
+    // it has to describe a position to Stockfish.
+    std::string placementFen() const;     // "rnbqkbnr/pppppppp/8/..."
+    std::string castlingFen() const;      // "KQkq", or "-" for none
+    std::string enPassantFen() const;     // "e3", or "-" for none
+
 private:
     std::array<Piece, SQUARE_COUNT> squares_{};
     int enPassantTarget_ = NO_SQUARE;

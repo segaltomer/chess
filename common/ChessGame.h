@@ -34,6 +34,15 @@ public:
     // published positions, and by the Bot to tell Stockfish where it stands.
     static ChessGame fromFen(const std::string& fen);
 
+    // The current position as a full FEN string — what Stockfish is given when
+    // it is asked for a move.
+    //
+    // The half-move and full-move counters are written as "0 1" rather than
+    // tracked. They exist for the fifty-move rule, which the requirements do
+    // not ask for and this engine does not implement, so carrying them would
+    // be state nothing reads.
+    std::string toFen() const;
+
     const Board& board() const;
 
     // §29: whose turn it is. Nothing else may move.

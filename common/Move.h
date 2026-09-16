@@ -21,4 +21,10 @@ struct Move {
     // Coordinate notation: "e2e4", or "e7e8q" for a promotion. This is the
     // form UCI uses, so it is also what Stockfish is given and sends back.
     std::string toString() const;
+
+    // The inverse, for reading Stockfish's answer. Anything that is not a move
+    // comes back with NO_SQUARE squares, which no game will accept — so a
+    // garbled reply is refused by the ordinary legality check rather than
+    // needing a special case (§47).
+    static Move fromString(const std::string& text);
 };

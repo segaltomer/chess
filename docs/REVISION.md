@@ -258,6 +258,87 @@ on the very next frame and could never be dismissed. Showing it once, then
 disabling board input and hiding the Offer Draw button, leaves the final
 position readable but untouchable.
 
+---
+
+## Phase 3 — the Bot
+
+**How does your program talk to Stockfish?**
+Stockfish is a separate program, not a library. We start it with
+`CreateProcess`, having first made two pipes — one to write its standard input,
+one to read its standard output — and then speak **UCI**, the plain-text
+protocol chess engines use. We send lines like `position fen ...` and `go
+movetime 500`; it replies with lines, ending in `bestmove e2e4`. Nothing is
+shared but those two pipes, which is what makes it genuinely a separate process
+as §46 requires.
+
+**Stockfish is far stronger than your code. What stops it running the game?**
+It only ever returns a *string*. `chooseMove` hands back something like
+"e2e4"; `BotGame` converts that to a `Move` and puts it through
+`ChessGame::makeMove` — the identical call a human's mouse click makes. If the
+suggestion were illegal it would be refused by the ordinary legality check, with
+no special case for it. §47 requires exactly this split: Stockfish selects the
+Bot's move, our code owns validation and game state.
+
+It was tested by playing 120 engine half-moves through our own rules. Every one
+was accepted, which also cross-checks our move generator against Stockfish's.
+
+**How do the three difficulty levels differ, and why not make them classes?**
+Two numbers: Stockfish's own `Skill Level` (0-20) and how long it may think.
+`Skill Level` is the one that matters — below 20 Stockfish deliberately plays
+moves it has judged inferior, so a low setting *blunders* like a weak human.
+Just giving it less time would not do that; a full-strength engine with a tenth
+of a second still plays far above club level.
+
+They are not classes because they differ only in values, not behaviour — a
+class per level would be decoration. §73 asks for polymorphism where it suits
+the design, and here it does not.
+
+**How do you know the levels are actually different, as §20 demands?**
+They were played against each other. Hard beat Easy from both colours, Medium
+beat Easy, and Hard beat Medium — all four games by checkmate, with lopsided
+material at the end (Medium finished with 3 points of material against Hard's
+26). That is a measurement, not an assumption.
+
+**Something subtle bit you when testing the engine. What?**
+An engine reading from a pipe treats **end-of-file as `quit`**. Feeding
+Stockfish a file of commands, it kept answering `bestmove a1b1` in a position
+that is mate in one, reporting `nodes 1` — it was not searching at all. On
+reaching the end of the file it took that as `quit` and abandoned the search
+immediately. The fix in the real code: our end of the pipe stays open for as
+long as the engine is wanted, and nothing is sent after `go` until `bestmove`
+comes back.
+
+**Why poll the pipe instead of just reading from it?**
+A plain `ReadFile` on a pipe blocks until something arrives. If the engine died
+mid-search, that would hang the whole board window, with no way even to close
+it. `PeekNamedPipe` asks whether anything is waiting first, so every read has a
+deadline and a silent engine becomes a reported error rather than a freeze.
+
+**Where does the Bot's window freeze, and what did you do about it?**
+The engine blocks while searching — up to a second on Hard. So the loop renders
+the human's move *before* asking the Bot, and shows "Bot is thinking..." with
+board input disabled while it waits. Done the other way round, the player's own
+piece would not appear to move until the Bot replied, and the program would
+look like it had frozen after every move.
+
+**You now have three game modes sharing one loop. How is that arranged?**
+A `Game` base class holds everything common: reading clicks, turning them into
+moves, the promotion dialog, resign confirmation, draw offers, and showing the
+result. `play()` is deliberately **not** virtual, so a mode cannot reimplement
+the parts §6 requires to behave identically. Subclasses fill in four small
+hooks — the player names, how a non-human opponent takes its turn, whose Resign
+button it is, and what a draw offer does. `LocalGame` is about 30 lines.
+
+The base class was written in Phase 3, not Phase 2. With only `LocalGame` in
+existence the seams would have been a guess; `BotGame` provided a second real
+case to generalise from.
+
+**Where is the only Windows-specific code in the project, and why is it
+contained?**
+`client/StockfishEngine.cpp` — process creation and pipes. The handles are
+declared `void*` in the header, so `<windows.h>` never leaks into anything that
+includes it. Everything else in the project is portable C++ and SFML.
+
 **A program that builds and links can still fail to start. How?**
 A missing DLL. `server.exe` built cleanly and then died instantly with no
 message at all, exit code `0xC0000135` — Windows kills a process for a missing

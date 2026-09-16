@@ -234,6 +234,62 @@ void Board::applyMove(const Move& move) {
 }
 
 
+std::string Board::placementFen() const {
+    std::string placement;
+
+    for (int row = 0; row < BOARD_SIZE; ++row) {
+        int emptyRun = 0;
+
+        for (int col = 0; col < BOARD_SIZE; ++col) {
+            const Piece piece = pieceAt(squareIndex(row, col));
+
+            if (piece.isEmpty()) {
+                ++emptyRun;
+                continue;
+            }
+
+            // FEN writes a run of empty squares as its length, so the count
+            // has to be flushed before the next piece letter.
+            if (emptyRun > 0) {
+                placement += std::to_string(emptyRun);
+                emptyRun = 0;
+            }
+
+            placement += toDisplayChar(piece);
+        }
+
+        if (emptyRun > 0) {
+            placement += std::to_string(emptyRun);
+        }
+
+        const bool isLastRow = (row == BOARD_SIZE - 1);
+        if (!isLastRow) {
+            placement += '/';
+        }
+    }
+
+    return placement;
+}
+
+
+std::string Board::castlingFen() const {
+    std::string rights;
+
+    if (canCastle(Color::White, CastlingSide::KingSide))  { rights += 'K'; }
+    if (canCastle(Color::White, CastlingSide::QueenSide)) { rights += 'Q'; }
+    if (canCastle(Color::Black, CastlingSide::KingSide))  { rights += 'k'; }
+    if (canCastle(Color::Black, CastlingSide::QueenSide)) { rights += 'q'; }
+
+    return rights.empty() ? "-" : rights;
+}
+
+
+std::string Board::enPassantFen() const {
+    // squareName already spells NO_SQUARE as "-", which is what FEN wants.
+    return squareName(enPassantTarget_);
+}
+
+
 std::array<char, SQUARE_COUNT> Board::toDisplay() const {
     std::array<char, SQUARE_COUNT> display{};
 

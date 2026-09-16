@@ -474,3 +474,78 @@ One small thing worth knowing: console messages printed just before the game
 loop are flushed explicitly. Nothing reads the console while a game is running,
 so an unflushed line can sit in the buffer, unseen, for as long as the board
 window stays open.
+
+---
+
+## Talking to Stockfish · `client/StockfishEngine` · §45-47
+
+Stockfish is a separate program, not a library. We start it with
+`CreateProcess`, having first made two pipes — one we write its input to, one
+we read its output from — and then talk **UCI**, the plain-text protocol every
+chess engine speaks. Commands go in as lines (`position fen ...`, `go movetime
+500`) and replies come back as lines (`bestmove e2e4`).
+
+It is found relative to the running executable, never by an absolute path,
+because the project is marked on another machine. `GetModuleFileNameW` gives
+the client's own folder and `stockfish/stockfish.exe` is looked for there
+first, then relative to the working directory.
+
+This is the only file in the project with Windows-specific code in it. The
+process and pipe handles are declared `void*` in the header so `<windows.h>`
+never leaks into anything that includes it.
+
+**The tricky part, and it cost real time to find:** an engine reading from a
+pipe treats **end-of-file as `quit`**. While testing this from the shell by
+feeding Stockfish a file of commands, it kept answering `bestmove a1b1` in a
+position that is mate in one — with `nodes 1` in its own output. It was not
+searching at all: it reached the end of the file, took that as `quit`, and
+abandoned the search the instant it began. Nothing was wrong with the engine or
+the position. The lesson carried into the real code is that our end of the pipe
+must stay **open** for as long as the engine is wanted, and that we must never
+send anything after `go` until `bestmove` has come back.
+
+**Why reads are polled rather than blocking.** A plain `ReadFile` on a pipe
+waits until something arrives, so an engine that died mid-search would hang the
+whole board window with it, with no way even to close it. `PeekNamedPipe` asks
+whether anything is waiting before committing to a read, so every read has a
+deadline and a silent engine turns into a reported error instead of a freeze.
+
+**The Bot cannot cheat.** §47 requires that Stockfish choose the Bot's move and
+nothing more, and that is visible in the code: `chooseMove` returns a *string*,
+which `BotGame` turns into a `Move` and puts through `ChessGame::makeMove` —
+the identical call a human's click makes. An illegal or garbled suggestion is
+refused by the ordinary legality check, not by a special case. This was tested
+by playing 120 engine half-moves through our own rules; every one was accepted,
+which also cross-checks our move generator against Stockfish's.
+
+---
+
+## The Bot and its difficulty levels · `client/BotGame`, `client/BotDifficulty` · §18-20, §43-44
+
+A level is two numbers: how much of its skill Stockfish may use (its own `Skill
+Level`, 0-20) and how long it may think. No class hierarchy — the levels differ
+in values, not behaviour, so classes would be decoration, and §73 asks for
+polymorphism only where it suits the design.
+
+`Skill Level` is the lever that matters. Below 20, Stockfish deliberately picks
+moves it has itself judged inferior, so a low setting **blunders** the way a
+weak human does. Limiting the time alone would not achieve that: a full-strength
+engine given a tenth of a second still plays far better than any student.
+
+**How §20 was actually demonstrated**, rather than assumed: the levels were
+played head to head. Hard beat Easy from both colours, Medium beat Easy, and
+Hard beat Medium — every game by checkmate, and the material counts at the end
+were lopsided (Medium finished with 3 points against Hard's 26). The ordering
+is real and the gaps are wide.
+
+**The tricky part:** the engine blocks while it searches, for up to a second on
+Hard. The loop therefore renders the human's move *before* asking the Bot, so
+the player sees their own piece land immediately instead of only when the reply
+arrives, and the status line says "Bot is thinking..." with board input
+switched off while it does. Doing it the other way round makes the program look
+like it has frozen after every move.
+
+`onOpponentTurn` is called on every frame, so it decides for itself whether
+there is anything to do — it returns at once unless the game is running and it
+is the Bot's turn. That keeps the base class free of any knowledge about which
+modes have a non-human opponent.

@@ -13,6 +13,30 @@ bool Move::operator!=(const Move& other) const {
 }
 
 
+Move Move::fromString(const std::string& text) {
+    const bool hasPlainLength = (text.size() == 4);
+    const bool hasPromotionLength = (text.size() == 5);
+
+    if (!hasPlainLength && !hasPromotionLength) {
+        return Move{};
+    }
+
+    const int fromSquare = squareFromName(text.substr(0, 2));
+    const int toSquare = squareFromName(text.substr(2, 2));
+
+    if (fromSquare == NO_SQUARE || toSquare == NO_SQUARE) {
+        return Move{};
+    }
+
+    PieceType promotion = PieceType::None;
+    if (hasPromotionLength) {
+        promotion = fromDisplayChar(text[4]).type;
+    }
+
+    return Move{fromSquare, toSquare, promotion};
+}
+
+
 std::string Move::toString() const {
     const bool hasRealSquares = isValidSquare(from) && isValidSquare(to);
     if (!hasRealSquares) {

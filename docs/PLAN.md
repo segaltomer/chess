@@ -41,20 +41,26 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 - [x] Local Game: two humans, one client, validated locally (§13, §17)
 - [x] Resign with Confirm/No dialog (§53-56)
 - [x] Draw offer shown to opponent on the same client (§48-49, §51-52)
-- [ ] **Student to confirm by playing it.** The five items above are written
-      and build, and the window opens and runs, but nobody has clicked a piece
-      yet. Play a full game: a normal move, an illegal move, check, a
-      promotion, castling, en passant, resign (both Confirm and No), and a draw
-      offer (both Accept and Decline). See `docs/CLAUDE_CODE.md` §4.
+- [x] **Confirmed by playing it.** Checked at the board: ordinary and illegal
+      moves, moving out of turn, check, promotion, castling, en passant,
+      resign with both Confirm and No, draw offer with both Accept and
+      Decline, and closing the window mid-game. All correct.
 
 ## Phase 3 — Bot (§18-20, 43-47)
 
-- [ ] Launch Stockfish as a subprocess, relative path (§46)
-- [ ] UCI communication to get a move (§46-47)
-- [ ] Three difficulty levels, chosen before the game starts (§43-44)
-- [ ] Levels clearly distinguishable in play (§19-20)
-- [ ] Our code still validates every move and owns game state (§47)
-- [ ] Hide the Offer Draw button in Bot mode
+- [x] Launch Stockfish as a subprocess, relative path (§46)
+- [x] UCI communication to get a move (§46-47)
+- [x] Three difficulty levels, chosen before the game starts (§43-44)
+- [x] Levels clearly distinguishable in play (§19-20) — head-to-head matches:
+      Hard beat Medium, Medium beat Easy and Hard beat Easy from both colours,
+      every game by checkmate
+- [x] Our code still validates every move and owns game state (§47) — checked
+      by playing 120 engine half-moves through `ChessGame::makeMove`
+- [x] Hide the Offer Draw button in Bot mode
+- [x] `Game` base class extracted, per DESIGN decision 2 (§73)
+- [ ] **Student to confirm by playing it.** Play each of the three levels and
+      confirm they feel different, that the Bot replies to your moves, and
+      that Offer Draw is absent. See `docs/CLAUDE_CODE.md` §4.
 
 ## Phase 4 — Server and Online (§11, 21-25, 40-42, 50, 56-63)
 

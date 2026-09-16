@@ -5,43 +5,53 @@ of the last one can read this and know exactly where things stand.
 
 ---
 
-**Phase:** 2 — Client, Local Game. Phase 1 is complete.
+**Phase:** 3 — the Bot (§18-20, §43-47). **Code complete; awaiting the
+student's play-test.** Phases 1 and 2 are done.
 
 **In progress:** nothing.
 
-**Last completed:** Phase 2 items 5-9 — the main menu (§8, §12), the GUI event
-loop, the Local Game (§13, §17), resignation with its Confirm/No dialog
-(§53-56), and the draw offer answered on the same client (§48-49, §51-52). New
-files `client/MainMenu.h/.cpp` and `client/LocalGame.h/.cpp`.
-
-Everything in Phase 2 is written and builds. **One item is deliberately left
-unticked: nobody has played a game yet.**
-
-**What has been verified, by running both programs together:** the connection
-screen's success path and all three recovery paths; rubbish typed at every
-prompt; the menu appearing only after a connection succeeds; each menu option
-including bad choices and Exit; and the board window opening, staying
-responsive, and running its loop at the GUI's own 60fps limit rather than
-spinning. The server's log confirms every connection and clean disconnection.
-
-**What has NOT been verified: anything that needs a mouse.** No piece has been
-clicked. The move, promotion, resign and draw paths are written against the
-tested rules engine and they compile, but they have never been exercised.
-
 **Files mid-edit:** none. Working tree clean.
 
-## What exists now
+**The one open item:** the student should play all three Bot levels and confirm
+they feel different, that the Bot replies, and that Offer Draw is hidden. The
+strength ordering has already been measured (see below), so this is a check on
+the feel and the wiring, not on the levels themselves.
 
-`common/` holds the whole rules engine and nothing else:
+## What is done
+
+**Phase 1 — the chess rules, in `common/`.** Complete and verified.
 
 | File | What it holds |
 |---|---|
-| `ChessTypes.h/.cpp` | `Color`, `PieceType`, `Piece`, square geometry, display characters |
+| `ChessTypes.h/.cpp` | `Color`, `PieceType`, `Piece`, square geometry, display characters, FEN square names |
 | `Move.h/.cpp` | a from/to/promotion triple, and its UCI spelling |
 | `Board.h/.cpp` | the 64 squares, castling rights, en passant target, `applyMove`, FEN reading |
 | `PieceRules.h/.cpp` | abstract base + one class per piece type; how each moves and what it attacks |
 | `Rules.h/.cpp` | attacked squares, check, legal moves, castling generation, checkmate, stalemate |
 | `ChessGame.h/.cpp` | the position, the turn, the result and the reason — the authority |
+
+**Phase 2 — the Client and the Local Game.** Complete and **confirmed at the
+board by the student**: ordinary and illegal moves, moving out of turn, check,
+promotion, castling, en passant, resign with both Confirm and No, draw offer
+with both Accept and Decline, and closing the window mid-game. All correct.
+
+| File | What it holds |
+|---|---|
+| `server/Server.h/.cpp`, `server/main.cpp` | listener, accepts clients, prints its address (§11) |
+| `client/ConsoleInput.h/.cpp` | console prompts with the checking §67 wants |
+| `client/ServerConnection.h/.cpp` | the socket, closed by its destructor (§76) |
+| `client/ConnectionScreen.h/.cpp` | §7, §9, §10 — the gate in front of the menu |
+| `client/MainMenu.h/.cpp` | the four options (§8, §12) |
+| `client/Game.h/.cpp` | the shared board loop every mode uses (DESIGN decision 2) |
+| `client/LocalGame.h/.cpp` | a two-human game — only what differs (§13, §17) |
+
+**Phase 3 — the Bot.** Code complete.
+
+| File | What it holds |
+|---|---|
+| `client/StockfishEngine.h/.cpp` | the Stockfish subprocess and UCI (§45-46); the only Windows-specific file |
+| `client/BotDifficulty.h/.cpp` | the three levels as data, and the menu that picks one (§43) |
+| `client/BotGame.h/.cpp` | a game against the engine, validated by our own rules (§18, §47) |
 
 `tests/perft_main.cpp` is the verification harness. It does not ship.
 
@@ -58,76 +68,67 @@ Alongside it, roughly 180 direct assertions were run while building, covering
 piece movement and blocking, turn order, check and pins, checkmate and
 stalemate, all six castling conditions, en passant including the capture that
 would expose your own king, promotion including under-promotion, and the result
-and reason strings. Those live in the scratch directory rather than the repo —
-perft is the regression test that matters, and it is the one kept.
+and reason strings. Those lived in the scratch directory — perft is the
+regression test that was kept, because it is the one that matters.
 
-**Not yet exercised by a human.** Nothing has been seen on screen yet; there is
-no GUI, no Client and no Server. That starts in Phase 2.
+The Client and Server were tested together: the connection screen's success
+path and all three recovery paths, rubbish typed at every prompt, the menu
+gate, and the server surviving several clients connecting, sending nonsense
+and disconnecting in any order.
 
-## Next step — this one is the student's
+**The Bot was verified against the real engine:**
 
-**Play a local game and report what happens.** Everything else is blocked on
-it: Phase 3 builds the Bot on top of this same board loop, so a fault here
-would be inherited.
+- FEN round-trips for four positions, including the en passant field.
+- Stockfish starts, completes the UCI handshake, and finds a mate in one.
+- It honours its time limit (912 ms for a 900 ms budget).
+- **120 engine half-moves all accepted by `ChessGame::makeMove`** — the §47
+  check, and an independent cross-check of our move generator.
+- **The levels were measured, not assumed:** Hard beat Easy from both colours,
+  Medium beat Easy, Hard beat Medium — all four by checkmate, with final
+  material such as 3 against 26.
+- Stockfish runs as a separate process and **is gone once the client exits**,
+  so the RAII shutdown leaves nothing orphaned.
 
-    ./server.exe          in one console
-    ./client.exe          in another, from the project root
+## Next step — Phase 4, the Server and Online play
 
-Connect to 127.0.0.1 on the port the server printed, choose Local Game, and
-try each of these:
+The biggest phase, and the one the requirements are strictest about. Before
+writing any of it, re-read §22-24 and DESIGN decisions 4 and 5.
 
-- an ordinary move, and an illegal one (the piece should simply stay put)
-- moving a piece when it is not that colour's turn
-- putting a king in check — "Check" should appear in the status area
-- a pawn reaching the far rank — the promotion dialog should appear, and all
-  four pieces should work
-- castling, both sides
-- en passant
-- Resign, then "No" — the game must carry on
-- Resign, then "Confirm" — the other colour should win, and the summary should
-  say who resigned
-- Offer Draw, then Decline — play continues
-- Offer Draw, then Accept — the game should end as a draw
-- closing the board window mid-game — it should return to the console menu
+The two things that must be true by construction, not by care:
 
-Report anything that looks wrong in the words of what you saw, as
-`docs/CLAUDE_CODE.md` §3 describes.
+- **§22-24.** The Server owns the board, the turn and the validation. The
+  Client never applies an online move itself and never treats its own request
+  as final. In practice: the Client's `OnlineGame` will have **no `ChessGame`
+  of its own** — only the last board the Server sent. That is what DESIGN
+  decision 2 was rearranged for, and it means the Client physically cannot
+  cheat rather than merely choosing not to.
+- **§60.** Never assume one game exists. Games live in a container keyed by id
+  from the first line written, and every message carries its game id so §59 —
+  never tell a client about a game it is not in — is checkable in one place.
 
-## After that
+`OnlineGame` will subclass `Game` like the other two, overriding
+`onOpponentTurn` to poll the Server rather than an engine.
 
-Phase 3, the Bot. Two things to settle when it starts:
-
-- `LocalGame` and `BotGame` will differ in almost nothing — only in who
-  supplies Black's move. The `Game` base class of DESIGN decision 2 should be
-  extracted then, when there are two real cases to generalise from, rather than
-  guessed at now from one.
-- What the Client does if the connection drops during a Local or Bot game.
-  Neither mode needs the Server at all (§17-18), so losing it should not
-  disturb them. Phase 5 covers it properly.
-
-**This is the first point where a person has to look at the screen.** The
-rules engine was verifiable by counting positions; a GUI is not. See
-`docs/CLAUDE_CODE.md` §4 — clicking pieces and reporting what happened is the
-part only the student can do.
-
-To run the server while testing a client:
-
-    ./server.exe
-
-It prints the IP and port to type into the connection screen.
+Phase 4 cannot be tested alone: it needs **two clients and one server running
+at once**, which the student must drive.
 
 ## Environment notes for the next session
 
-`git` is **not** on `PATH` in this shell. The working copy is the one bundled
-with Visual Studio; prefix git commands with:
+`git` is **not** on `PATH` in this shell. Two bundled copies exist; the
+GitHub Desktop one is newer:
 
-    $env:PATH = "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\Team Explorer\Git\cmd;" + $env:PATH
+    $env:PATH = "C:\Users\Owner\AppData\Local\GitHubDesktop\app-3.6.5\resources\app\git\cmd;" + $env:PATH
 
 `g++` needs `C:\msys64\ucrt64\bin` on `PATH` the same way.
 
 Commit messages must be passed with `git commit -F <file>`, not `-m`, because
 PowerShell mangles arguments containing double quotes when handing them to a
 native executable.
+
+**Never rewrite a UTF-8 doc through PowerShell** (`Get-Content -Raw` then
+`WriteAllText`, or `Set-Content`). PowerShell 5.1 reads UTF-8 as ANSI and
+writes it back double-encoded, turning every `§` into mojibake. Use the editing
+tools instead. This has already happened once to `docs/PLAN.md`.
 
 **`git push` cannot work from this shell, by design of the machine's setup.**
 Windows Credential Manager holds no `git:https://github.com` entry; GitHub
@@ -137,8 +138,8 @@ from here has to prompt for a username, and this shell has no interactive
 input: it fails with `could not read Username`.
 
 **This is not a problem as long as the student pushes from GitHub Desktop**,
-which is what `docs/CLAUDE_CODE.md` §6 already tells them to do. Commit locally,
-tell them a commit is ready, and they push.
+which is what `docs/CLAUDE_CODE.md` §6 already tells them to do. Commit
+locally, tell them a commit is ready, and they push.
 
 To make pushing work from a shell one day: install Git for Windows (it puts
 `git` on `PATH` and ships Git Credential Manager), then run `git push` once in

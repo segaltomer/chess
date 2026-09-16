@@ -1,11 +1,35 @@
+#include "BotDifficulty.h"
+#include "BotGame.h"
 #include "ConnectionScreen.h"
 #include "LocalGame.h"
 #include "MainMenu.h"
 #include "ServerConnection.h"
+#include "StockfishEngine.h"
 
 #include <iostream>
 
 namespace {
+
+// §43-44: the difficulty is chosen first, and the game starts once it has
+// been. The engine is only started afterwards, and if it cannot start the
+// player is told and sent back to the menu rather than shown an empty board.
+void runBotGame() {
+    BotDifficulty difficulty = BotDifficulty::Medium;
+    if (!chooseBotDifficulty(difficulty)) {
+        return;
+    }
+
+    std::cout << "\nStarting Stockfish..." << std::endl;
+
+    StockfishEngine engine;
+    if (!engine.isRunning()) {
+        std::cout << "The Bot is unavailable: " << engine.lastError() << "\n";
+        return;
+    }
+
+    BotGame botGame(engine, settingsFor(difficulty), Color::White);
+    botGame.play();
+}
 
 // Runs the chosen mode. Returns false when the player wants to leave.
 bool runChoice(MainMenuChoice choice) {
@@ -17,7 +41,7 @@ bool runChoice(MainMenuChoice choice) {
         }
 
         case MainMenuChoice::PlayerVsBot:
-            std::cout << "\nPlayer vs Bot is not available yet.\n";
+            runBotGame();
             return true;
 
         case MainMenuChoice::OnlineGame:
