@@ -34,4 +34,10 @@ std::vector<Move> legalMoves(const Board& board, Color colour);
 
 bool isLegalMove(const Board& board, Color colour, const Move& move);
 
+// §32 and §33. Both are the same situation — the side to move has nothing it
+// may legally play — and differ only in whether it is in check at the time.
+// Checkmate loses the game; stalemate draws it.
+bool isCheckmate(const Board& board, Color colour);
+bool isStalemate(const Board& board, Color colour);
+
 }   // namespace Rules

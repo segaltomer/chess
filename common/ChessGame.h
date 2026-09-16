@@ -34,6 +34,12 @@ public:
     // §30: whether the side to move is currently in check.
     bool isInCheck() const;
 
+    // §32: the side to move is in check and has no legal move — it has lost.
+    bool isCheckmate() const;
+
+    // §33: the side to move is not in check but has no legal move — a draw.
+    bool isStalemate() const;
+
     // §31: every move the side to move may legally play.
     std::vector<Move> legalMoves() const;
 

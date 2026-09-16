@@ -7,23 +7,29 @@ of the last one can read this and know exactly where things stand.
 
 **Phase:** 1 — chess rules in `common/` (§26-39)
 
-**In progress:** nothing. Items 1-7 are committed.
+**In progress:** nothing. Items 1-9 are committed.
 
-**Last completed:** Phase 1 items 5-7 — turn order (§29), check detection (§30)
-and rejecting moves that leave your own king in check (§31). New files
-`common/Rules.h/.cpp`, `common/ChessGame.h/.cpp`, and the perft harness at
-`tests/perft_main.cpp`.
+**Last completed:** Phase 1 items 8-9, checkmate (§32) and stalemate (§33), in
+`common/Rules.h/.cpp` with thin forwarders on `ChessGame`.
 
-Verified: perft from the starting position matches the published counts at
-depths 1-4 (20 / 400 / 8,902 / 197,281), plus 31 direct assertions on turn
-order, blocked and unblocked checks, pinned pieces, king safety, kings not
-standing adjacent, and FEN parsing.
+Verified so far: perft from the starting position matches the published counts
+at depths 1-4 (20 / 400 / 8,902 / 197,281); 31 assertions on turn order, check
+detection, pins, king safety and FEN parsing; 40 assertions across three real
+checkmates (fool's, back rank, smothered), two stalemates, and two in-check
+positions that are *not* mate.
 
 **Files mid-edit:** none. Working tree clean.
 
-**Next step:** Phase 1 items 8-9, checkmate (§32) and stalemate (§33). Both are
-one question — "no legal moves" — split by whether the side to move is in
-check, so they belong on `ChessGame` alongside the result and reason of item 13.
+**Next step:** Phase 1 item 10, castling with all its conditions (§34).
+
+Note on where it goes: castling is generated in `Rules`, **not** in `KingRules`
+with the other king moves. It has to be, because two of its conditions are
+about attacked squares — the king may not castle out of check, nor through a
+square the enemy attacks — and answering that needs `isSquareAttacked`, which
+lives in `Rules`. Having `PieceRules` call back into `Rules` would make the two
+mutually dependent. Generating castling one level up keeps the dependency
+one-way, and is honest besides: castling is a fact about a king, a rook and the
+check state together, not about how a king moves.
 
 **Deliberately not done yet:** castling and en passant *generation* (items 10
 and 11 — `Board` already performs both, nothing yet offers them as moves), and

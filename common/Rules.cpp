@@ -92,3 +92,21 @@ bool Rules::isLegalMove(const Board& board, Color colour, const Move& move) {
 
     return std::find(legal.begin(), legal.end(), move) != legal.end();
 }
+
+
+bool Rules::isCheckmate(const Board& board, Color colour) {
+    if (!isInCheck(board, colour)) {
+        return false;
+    }
+
+    return legalMoves(board, colour).empty();
+}
+
+
+bool Rules::isStalemate(const Board& board, Color colour) {
+    if (isInCheck(board, colour)) {
+        return false;
+    }
+
+    return legalMoves(board, colour).empty();
+}

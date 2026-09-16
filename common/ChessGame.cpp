@@ -39,6 +39,16 @@ bool ChessGame::isInCheck() const {
 }
 
 
+bool ChessGame::isCheckmate() const {
+    return Rules::isCheckmate(board_, sideToMove_);
+}
+
+
+bool ChessGame::isStalemate() const {
+    return Rules::isStalemate(board_, sideToMove_);
+}
+
+
 std::vector<Move> ChessGame::legalMoves() const {
     return Rules::legalMoves(board_, sideToMove_);
 }

@@ -168,3 +168,26 @@ comparing against a known-good engine narrows a miscount to one move, then one
 position. Depths 1-4 from the start are reachable without castling or en
 passant, so those are the cases checked for now; the rest of the suite is added
 as those moves are implemented.
+
+---
+
+## Checkmate and stalemate · `common/Rules`, `common/ChessGame` · §32-33
+
+Both are the same situation: the side to move has no legal move at all. They
+differ only in whether that side is in check while it happens. In check with
+nothing to play is checkmate and loses the game; not in check with nothing to
+play is stalemate and draws it.
+
+Written that way, neither needed any new machinery — they are two lines each on
+top of `legalMoves` and `isInCheck`. That is the payoff from defining "legal"
+properly in the first place: because a legal move is already one that does not
+leave your own king in check, an empty legal-move list already means "there is
+genuinely nothing this player can do", with escapes, blocks and captures of the
+checking piece all accounted for.
+
+**The tricky part:** it is tempting to detect mate by looking for the king
+having no square to run to. That is wrong twice over — it misses the mates
+where the king has an empty square but every escape is attacked, and it calls
+mate in positions where some *other* piece can block the check or capture the
+checker. Asking "is the legal move list empty" is both simpler and correct,
+and it gets stalemate right at the same time instead of as a separate rule.
