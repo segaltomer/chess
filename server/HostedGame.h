@@ -51,7 +51,6 @@ public:
     // while the first is outstanding, and a player cannot offer to themselves.
     // Returns false if the offer is not allowed right now (§67).
     bool offerDraw(int clientId);
-    bool hasPendingDrawOffer() const;
 
     // The client who made the outstanding offer, or 0 if none stands.
     int drawOfferedBy() const;

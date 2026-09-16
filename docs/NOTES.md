@@ -754,3 +754,48 @@ prompts driven with deliberate rubbish at every one: a bad address, an address
 where a port belongs, a port out of range, words where numbers belong, and menu
 choices above, below and outside the range. Every one is refused with a specific
 message and re-asked, and nothing is left in a bad state.
+
+
+## The quality pass · all of `common/`, `client/`, `server/` · §71-80
+
+Ten requirements about the C++ rather than the chess. Mostly a reading and
+measuring pass over code already written; what it actually turned up:
+
+**§78 was measured, not argued.** The tempting answer to "are there leaks?" is
+"there is no `new` anywhere, so no" — true, and worth saying, but it is an
+argument rather than evidence. AddressSanitizer is not built into this MinGW
+toolchain, so the check used the real binary instead: one Server process, six
+complete runs of the protocol test through it, watching its memory and handle
+count after each.
+
+    run 1: private 1,140 KB   handles 94
+    run 6: private 1,048 KB   handles 94
+
+Flat, after roughly seventy client connections and two dozen games created and
+finished. The handle count matters as much as the memory: it is what would climb
+if a socket were ever not closed, so it is §76 demonstrated as well as §78.
+
+**Two dead methods, found by counting references.** `HostedGame::hasPending
+DrawOffer` and `ChessGame::legalMovesFrom` were each declared and defined and
+called from nowhere — `legalMovesFrom` had been written for a
+highlight-the-legal-moves feature the provided GUI turns out to do itself. Both
+deleted. An unused public method is not harmless: it is code the student would
+have to explain, and it invites the question of what it was for.
+
+**Where `const` was actually wrong.** Only one place: `Server::describeById`
+builds a string for the log and changes nothing, but was non-const because it
+called `findClient`, which hands back a pointer the caller may write through.
+Rather than add a second const overload of `findClient` and the usual
+`const_cast` between the two, `describeById` now does its own const search — six
+lines, and no clever pointer laundering to explain.
+
+**Two `sf::Packet` parameters are taken by value on purpose**, which looks like
+a §75 slip and is not. SFML's `send` takes a non-const reference and consumes
+the packet as it writes, and every caller builds its message inline and passes
+the temporary, which a reference cannot bind to. Both now say so in a comment,
+because the alternative is a reader assuming it was carelessness.
+
+**The protected members are a considered position, not an oversight** — see
+DESIGN decision 6. Wrapping `gui_` in a protected accessor that returns a
+mutable reference would give a subclass identical power while looking more
+encapsulated, which is worse than being honest about it.

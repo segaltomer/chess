@@ -68,17 +68,6 @@ std::vector<Move> ChessGame::legalMoves() const {
 }
 
 
-std::vector<Move> ChessGame::legalMovesFrom(int fromSquare) const {
-    const std::vector<Move> all = legalMoves();
-
-    std::vector<Move> fromSquareMoves;
-    std::copy_if(all.begin(), all.end(), std::back_inserter(fromSquareMoves),
-                 [fromSquare](const Move& move) { return move.from == fromSquare; });
-
-    return fromSquareMoves;
-}
-
-
 bool ChessGame::isLegal(const Move& move) const {
     return Rules::isLegalMove(board_, sideToMove_, move);
 }

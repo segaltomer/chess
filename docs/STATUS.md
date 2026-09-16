@@ -5,8 +5,9 @@ of the last one can read this and know exactly where things stand.
 
 ---
 
-**Phase:** 5 — robustness (§64-70). **Done.** Phases 1-4 are done.
-**Next up: Phase 6, the quality pass (§71-80).**
+**Phase:** 6 — the quality pass (§71-80). **Done.** Phases 1-5 are done.
+**Next up: Phase 7, submission (§82-84)** — and the one thing that needs a
+second computer, §25.
 
 **In progress:** nothing.
 
@@ -144,6 +145,16 @@ address, an address where a port belongs, a port out of range, words where
 numbers belong, and menu choices above, below and outside the range. Each is
 refused with a specific message and re-asked.
 
+**Phase 6 — the quality pass (§71-80).** Complete. Searched rather than assumed:
+no `new`/`delete`/`malloc`/`free` anywhere, no absolute paths, no TODO/FIXME, no
+commented-out code, no debug printing, and nothing in `common/` writes to the
+console. §78 and §76 were demonstrated on the real binary — six full protocol
+workloads through one server process left memory flat at 1,048 KB and the handle
+count constant at 94. Two dead methods were found by counting references and
+deleted (`HostedGame::hasPendingDrawOffer`, `ChessGame::legalMovesFrom`), one
+method was made `const`, and a `-Wcomment` warning was fixed in all three test
+harnesses. Both programs build clean under `-Wall -Wextra`.
+
 It is kept, as `tests/protocol_test.cpp`, alongside perft and the Bot match.
 Unlike those two it needs a Server to talk to, so it takes two windows:
 
@@ -170,12 +181,21 @@ of turn does nothing, a draw offer appears only on the other window, resigning
 ends it on both, and closing one client mid-game ends the other's game with
 "disconnected" rather than "resigned".
 
-## Next step — Phase 5, robustness (§64-70)
+## Next step — Phase 7, submission (§82-84)
 
-Much of it is already standing, because Phase 4 could not be written without it:
-disconnections, malformed messages and console logging are all in place and
-tested. Phase 5 is where they are gone through against the requirements one at a
-time rather than assumed to be covered.
+The remaining work is packaging, plus the one test that needs another machine.
+
+1. **§25 on a second computer.** The student asked to be reminded of this at the
+   end; it is the first item of Phase 7 in `docs/PLAN.md`. Server and one Client
+   here, a second Client on another machine, using the LAN address the Server
+   prints. Nothing else about online play is unverified.
+2. Go through `docs/REQUIREMENTS.md` and tick all 89 against the code.
+3. Build the zip from the whitelist in `docs/PLAN.md` — copy items in, never
+   copy the folder and delete. 19 DLLs, both executables, Stockfish.
+4. **Settle the upload size early.** `stockfish.exe` alone is 103 MB, so the zip
+   will exceed 100 MB. §82 requires the binary, so if the submission system caps
+   the size the lecturer has to say how he wants it delivered. It is the one
+   item here that more work cannot solve.
 
 ## Environment notes for the next session
 

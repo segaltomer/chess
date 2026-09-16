@@ -115,16 +115,29 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 
 ## Phase 6 — quality pass (§71-80)
 
-- [ ] Responsibilities cleanly separated (§71)
-- [ ] Encapsulation; members private, behaviour exposed (§72)
-- [ ] Inheritance/polymorphism where it fits, per DESIGN.md §6 (§73)
-- [ ] Appropriate STL containers (§74)
-- [ ] `const` correctness (§75)
-- [ ] RAII for sockets, files, the Stockfish process (§76)
-- [ ] Smart pointers for dynamic ownership; no raw new/delete (§77)
-- [ ] No leaks, no double free (§78)
-- [ ] .h / .cpp separation throughout (§79)
-- [ ] Readable, modular, sensible error handling (§80)
+- [x] Responsibilities cleanly separated (§71) — nothing in `common/` prints to
+      the console; sockets, dispatch, matchmaking and one hosted game are four
+      separate classes on the Server
+- [x] Encapsulation; members private, behaviour exposed (§72) — the two
+      protected members are argued for in DESIGN decision 6 rather than left
+      to look like an oversight
+- [x] Inheritance/polymorphism where it fits, per DESIGN.md §6 (§73) — piece
+      rules, and the three-level `Game` hierarchy
+- [x] Appropriate STL containers (§74) — `array` for the board, `vector` for
+      moves and clients, `map` keyed by game id, `unique_ptr`, `optional`
+- [x] `const` correctness (§75) — swept; `describeById` made const, and the two
+      by-value `sf::Packet` parameters now say why they are not `const&`
+- [x] RAII for sockets, files, the Stockfish process (§76) — demonstrated: the
+      Server's handle count is identical before and after six full workloads
+- [x] Smart pointers for dynamic ownership; no raw new/delete (§77) — searched;
+      there is no `new`, `delete`, `malloc` or `free` anywhere in our source
+- [x] No leaks, no double free (§78) — six full protocol workloads against one
+      Server process left memory flat at 1,048 KB and handles constant at 94
+- [x] .h / .cpp separation throughout (§79) — the only code in a header is
+      three empty default hooks
+- [x] Readable, modular, sensible error handling (§80) — no absolute paths, no
+      TODO/FIXME, no commented-out code, no leftover debug printing; two dead
+      methods found and deleted
 
 ## Phase 7 — submission (§82-84)
 

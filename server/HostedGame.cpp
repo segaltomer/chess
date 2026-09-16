@@ -127,11 +127,6 @@ bool HostedGame::offerDraw(int clientId) {
 }
 
 
-bool HostedGame::hasPendingDrawOffer() const {
-    return drawOfferedBy_ != NO_CLIENT;
-}
-
-
 int HostedGame::drawOfferedBy() const {
     return drawOfferedBy_;
 }

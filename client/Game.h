@@ -91,8 +91,10 @@ protected:
     // §48: the player pressed Offer Draw. Modes without draw offers do nothing.
     virtual void onDrawOffered() {}
 
-    // §51-52: an offer that was shown to this Client has been answered.
-    virtual void onDrawResponse(bool isAccepted) { (void)isAccepted; }
+    // §51-52: an offer that was shown to this Client has been answered. The
+    // parameter is left unnamed here because the default does nothing with it;
+    // the modes that override it name it.
+    virtual void onDrawResponse(bool /* isAccepted */) {}
 
     // Pushes the current position and captions into the GUI. Public to the
     // subclasses because an Online game also calls it when a state message

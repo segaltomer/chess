@@ -258,13 +258,29 @@ that means rewriting the Server.
    colour, what are your target squares?"). One instance of each exists, looked
    up by `PieceType`. That is what lets the board itself stay a cheap array of
    values — behaviour is polymorphic, data is not.
-2. **Game modes** — `Game` base with `LocalGame`, `BotGame`, `OnlineGame`, as
-   in decision 2.
+2. **Game modes** — three levels, as built in Phase 4 and set out in decision 2:
+   `Game`, then `ClientValidatedGame` for the modes this Client is the authority
+   on, then `LocalGame`, `BotGame` and `OnlineGame`.
+
+   The middle level is the load-bearing part. It is not there to share code —
+   though it does — but to put the rules engine on one branch of the hierarchy
+   and not the other, so that `OnlineGame` has no `makeMove` to call and §24
+   cannot be broken by accident.
 
 Bot difficulty is **not** a class hierarchy — it is three sets of Stockfish
 parameters, because the three levels differ only in values passed to the engine,
 not in behaviour. §73 asks for polymorphism where it suits the design; forcing
 it here would be decoration.
+
+**Two protected data members, deliberately.** `Game` exposes `gui_` to its
+subclasses, and `ClientValidatedGame` exposes `game_` to its. §72 wants members
+private, and the usual repair would be a protected accessor returning a
+reference — but a protected accessor handing out a mutable reference gives a
+subclass exactly the same power as the member did, so it buys the appearance of
+encapsulation rather than the fact of it. The subclasses genuinely need the GUI:
+they set player names, hide the Offer Draw button, show dialogs and render. What
+matters for §72 is that both are protected rather than public, so nothing
+outside the hierarchy can reach them.
 
 ---
 

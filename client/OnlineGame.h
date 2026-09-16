@@ -83,6 +83,10 @@ private:
 
     bool isMyTurn() const;
 
+    // Taken by value, unusually, because SFML's own send takes a non-const
+    // reference and reads the packet as it goes. Callers build a message inline
+    // and pass the temporary straight in, which a reference parameter cannot
+    // bind to, and a sent packet is not wanted afterwards anyway.
     void send(sf::Packet packet);
 
     // Reads everything the Server has sent since the last frame. One frame can

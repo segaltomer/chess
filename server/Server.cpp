@@ -74,11 +74,16 @@ std::string Server::describe(const ClientConnection& client) {
 }
 
 
-std::string Server::describeById(int clientId) {
-    const ClientConnection* client = findClient(clientId);
+std::string Server::describeById(int clientId) const {
+    // Searches directly rather than through findClient, which hands back a
+    // pointer the caller may write through and so cannot be const.
+    for (const ClientConnection& client : clients_) {
+        if (client.id == clientId) {
+            return describe(client);
+        }
+    }
 
-    return (client != nullptr) ? describe(*client)
-                               : "client " + std::to_string(clientId);
+    return "client " + std::to_string(clientId);
 }
 
 

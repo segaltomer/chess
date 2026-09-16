@@ -62,10 +62,6 @@ public:
     // §31: every move the side to move may legally play.
     std::vector<Move> legalMoves() const;
 
-    // The legal moves that start on one square — what the GUI needs once a
-    // player has picked a piece up.
-    std::vector<Move> legalMovesFrom(int fromSquare) const;
-
     bool isLegal(const Move& move) const;
 
     // §36: true when a legal move between these two squares would land a pawn

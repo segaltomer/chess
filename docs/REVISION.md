@@ -510,3 +510,53 @@ malformed message, after which the Server is checked to still be pairing new
 clients. The console prompts were driven separately with deliberate rubbish at
 every one. What it cannot check is §25, two machines on one network; that needs
 a second computer.
+
+
+## Phase 6 — the quality pass
+
+**How do you know there are no memory leaks?**
+It was measured rather than argued. The easy answer is that there is no `new`,
+`delete`, `malloc` or `free` anywhere in the project — the only owning pointer
+is a `unique_ptr<sf::TcpSocket>` and everything else is a value or an STL
+container — but that is reasoning, not evidence. AddressSanitizer is not built
+into this MinGW toolchain, so the real binary was watched instead: one server
+process, six complete runs of the protocol test through it, about seventy
+connections and two dozen games. Memory finished flat at 1,048 KB and the
+handle count never moved off 94. The handle count is the telling one, because
+that is what would climb if a socket were ever left unclosed.
+
+**Where is RAII in this project, and what would go wrong without it?**
+Three places. `ServerConnection` closes its socket in its destructor;
+`StockfishEngine` starts the engine process in its constructor and shuts it down
+in its destructor; the Server holds each client's socket in a `unique_ptr`.
+Without it, every path out of a function would have to remember to clean up —
+including the ones that throw — and the failure is invisible at first: sockets
+and a 103 MB engine process quietly accumulating. Both classes are also
+non-copyable, because two objects each believing they own the same socket or the
+same process would try to close it twice.
+
+**Why is `gui_` protected rather than private? Isn't that against encapsulation?**
+It is a deliberate choice. The usual repair is a protected accessor returning a
+reference to the same member — but that hands a subclass exactly the same power
+while merely looking more encapsulated, so it buys the appearance rather than
+the fact. Subclasses genuinely need the GUI: they set player names, hide the
+Offer Draw button, show dialogs and render. What §72 really turns on is that it
+is protected rather than public, so nothing outside the hierarchy can touch it.
+
+**You have two functions taking `sf::Packet` by value. Why not `const&`?**
+Because SFML's own `send` takes a *non-const* reference and reads the packet as
+it goes, so it cannot take a `const&`; and every caller builds its message
+inline and passes the temporary, which a plain reference cannot bind to. Taking
+it by value gives each recipient its own copy, which is exactly what sending the
+same message to two players needs. It is the one place in the project where
+by-value is right, and both say so in a comment.
+
+**Did the quality pass actually change anything, or just confirm things?**
+It changed four things. Two methods were found to be declared, defined and
+called from nowhere — `HostedGame::hasPendingDrawOffer`, and
+`ChessGame::legalMovesFrom`, which had been written to highlight a piece's legal
+moves before it turned out the provided GUI does that itself. Both were deleted,
+because an unused public method is still code that has to be explained. One
+method that changed nothing was made `const`. And a warning I had introduced in
+all three test harnesses — a line-continuation backslash at the end of a `//`
+comment, which `-Wcomment` objects to — was fixed.

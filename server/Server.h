@@ -102,6 +102,9 @@ private:
 
     ClientConnection* findClient(int clientId);
 
+    // Packets are taken by value because SFML's own send takes a non-const
+    // reference and reads the packet as it goes, so each recipient needs its
+    // own copy, and callers pass a message built inline.
     void sendTo(int clientId, sf::Packet packet);
 
     // Sends the same packet to both players of a game (§22 state updates).
@@ -119,5 +122,7 @@ private:
     // so that the log of a busy server can be read (§68-70).
     static std::string describe(const ClientConnection& client);
 
-    std::string describeById(int clientId);
+    // The same, found by id. Separate from `describe` because a client that has
+    // already been dropped no longer has a connection to describe.
+    std::string describeById(int clientId) const;
 };
