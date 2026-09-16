@@ -284,3 +284,44 @@ of `Move::promotion` being part of what makes two moves equal.
 Under-promotion is real, not decoration: there is a test where a pawn reaching
 e8 gives check as a knight and does not as a queen, because e8 and the black
 king on g7 share no rank, file or diagonal. §36 requires all four choices.
+
+---
+
+## The result and the reason · `common/ChessGame` · §37-39
+
+A finished game has two facts, and §39 wants both: the **result**
+(`GameResult` — who won, or a draw) and the **reason** (`GameEndReason` —
+checkmate, stalemate, resignation, draw agreed). One without the other is not
+enough to tell a player what happened: "Draw" does not say whether they agreed
+to one or were stalemated, and "Black wins" does not say whether White was
+mated or gave up.
+
+Both are **stored**, not recomputed. They have to be, because two of the four
+reasons are events rather than positions — you cannot look at a board and see
+that someone resigned. Storing them also means `isOver()` is a comparison
+rather than a full legal-move generation, and it makes the outcome permanent:
+once set, nothing overwrites it. A resigned game cannot later be drawn, and
+`makeMove` refuses everything once the game is over.
+
+Checkmate and stalemate are filled in by `updateResultFromPosition`, called
+after every accepted move — and once by `fromFen`, because a position loaded
+from text may already be finished.
+
+`resultTitle()` and `resultDetail()` return exactly the two strings
+`ChessFrontend::showGameOver` takes: `"Black wins!"` and `"White resigned"`.
+They live in `common/` on purpose. The Server needs the same two strings to
+send to both clients when an online game ends, so producing them in one place
+is what stops a Local game and an online game describing the same outcome in
+different words.
+
+**The tricky part:** the side to move is the side that has *lost* when there is
+a checkmate. `updateResultFromPosition` runs after the turn has already
+changed hands, so if the new side to move is mated, the winner is the player
+who just moved. Getting that backwards would report every checkmate as a win
+for the wrong colour — and it would pass a casual test, because a game ending
+in a mate looks correct until you read whose name is on it.
+
+Resignation takes the colour rather than assuming the side to move, because a
+player may resign at any time, including on the opponent's turn (§53). The
+detail string does not need to store who resigned: the resigner is the loser,
+so the result already says which.

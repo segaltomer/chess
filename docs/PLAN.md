@@ -23,7 +23,8 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 - [x] Castling, all conditions (§34)
 - [x] En passant (§35)
 - [x] Promotion, choice of Q/R/B/N (§36)
-- [ ] Game result + reason exposed for the GUI (§39)
+- [x] Game result + reason exposed for the GUI (§39), with resignation (§37)
+      and draw by agreement (§38) at the rules level
 
 ## Phase 2 — Client, Local Game (§7-17, 48-56)
 

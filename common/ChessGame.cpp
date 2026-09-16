@@ -20,6 +20,9 @@ ChessGame ChessGame::fromFen(const std::string& fen) {
     game.board_ = Board::fromFen(placement, castlingField, enPassantField);
     game.sideToMove_ = (sideToMoveField == "b") ? Color::Black : Color::White;
 
+    // The position loaded may already be a checkmate or a stalemate.
+    game.updateResultFromPosition();
+
     return game;
 }
 
@@ -84,12 +87,101 @@ bool ChessGame::needsPromotionChoice(int fromSquare, int toSquare) const {
 
 
 bool ChessGame::makeMove(const Move& move) {
-    if (!isLegal(move)) {
+    if (isOver() || !isLegal(move)) {
         return false;
     }
 
     board_.applyMove(move);
     sideToMove_ = opposite(sideToMove_);
 
+    updateResultFromPosition();
+
     return true;
+}
+
+
+void ChessGame::updateResultFromPosition() {
+    if (Rules::isCheckmate(board_, sideToMove_)) {
+        // The side that cannot move is the side that has been mated, so the
+        // other one has won.
+        const bool whiteIsMated = (sideToMove_ == Color::White);
+
+        result_ = whiteIsMated ? GameResult::BlackWins : GameResult::WhiteWins;
+        endReason_ = GameEndReason::Checkmate;
+        return;
+    }
+
+    if (Rules::isStalemate(board_, sideToMove_)) {
+        result_ = GameResult::Draw;
+        endReason_ = GameEndReason::Stalemate;
+    }
+}
+
+
+void ChessGame::resign(Color resigningColour) {
+    if (isOver()) {
+        return;
+    }
+
+    const bool whiteResigned = (resigningColour == Color::White);
+
+    result_ = whiteResigned ? GameResult::BlackWins : GameResult::WhiteWins;
+    endReason_ = GameEndReason::Resignation;
+}
+
+
+void ChessGame::agreeDraw() {
+    if (isOver()) {
+        return;
+    }
+
+    result_ = GameResult::Draw;
+    endReason_ = GameEndReason::DrawAgreed;
+}
+
+
+bool ChessGame::isOver() const {
+    return result_ != GameResult::InProgress;
+}
+
+
+GameResult ChessGame::result() const {
+    return result_;
+}
+
+
+GameEndReason ChessGame::endReason() const {
+    return endReason_;
+}
+
+
+std::string ChessGame::resultTitle() const {
+    switch (result_) {
+        case GameResult::WhiteWins:  return "White wins!";
+        case GameResult::BlackWins:  return "Black wins!";
+        case GameResult::Draw:       return "Draw";
+        case GameResult::InProgress: break;
+    }
+
+    return "";
+}
+
+
+std::string ChessGame::resultDetail() const {
+    switch (endReason_) {
+        case GameEndReason::Checkmate:  return "Checkmate";
+        case GameEndReason::Stalemate:  return "Stalemate";
+        case GameEndReason::DrawAgreed: return "Draw agreed";
+
+        case GameEndReason::Resignation: {
+            // Whoever resigned is whoever lost, so the result says which.
+            const bool whiteResigned = (result_ == GameResult::BlackWins);
+
+            return whiteResigned ? "White resigned" : "Black resigned";
+        }
+
+        case GameEndReason::None: break;
+    }
+
+    return "";
 }

@@ -7,6 +7,14 @@
 #include <string>
 #include <vector>
 
+// How a finished game turned out. InProgress means it has not finished.
+enum class GameResult { InProgress, WhiteWins, BlackWins, Draw };
+
+// Why it finished. §39 requires the reason as well as the result, because
+// "Draw" alone does not tell a player whether they agreed one or were
+// stalemated, and "Black wins" does not say whether White was mated or resigned.
+enum class GameEndReason { None, Checkmate, Stalemate, Resignation, DrawAgreed };
+
 // One game of chess: the position, whose turn it is, and the rules being
 // enforced on both. This object is the authority — a move it refuses did not
 // happen.
@@ -57,10 +65,42 @@ public:
 
     // Plays the move if it is legal for the side to move, then hands the turn
     // over (§29). Returns false and changes nothing at all otherwise, so a
-    // rejected move cannot leave the game half-updated.
+    // rejected move cannot leave the game half-updated. A finished game
+    // refuses every move.
     bool makeMove(const Move& move);
+
+    // §37: the named colour gives up; the other wins. Ignored if the game has
+    // already finished. Either colour may resign at any time, including on the
+    // opponent's turn, which is why this takes a colour rather than assuming
+    // the side to move.
+    void resign(Color resigningColour);
+
+    // §38: both players have agreed to a draw. Whether they really agreed is
+    // the caller's business — on one Client for a Local game, through the
+    // Server for an Online one. This only records the outcome.
+    void agreeDraw();
+
+    bool isOver() const;
+    GameResult result() const;
+    GameEndReason endReason() const;
+
+    // §39: the result and the reason, worded for ChessFrontend::showGameOver,
+    // which takes exactly these two strings — for example "Black wins!" and
+    // "White resigned". Both are empty while the game is still going.
+    //
+    // They are produced here, in common/, so that a Local game, a Bot game and
+    // a game running on the Server all word the same outcome identically.
+    std::string resultTitle() const;
+    std::string resultDetail() const;
 
 private:
     Board board_;
     Color sideToMove_ = Color::White;
+    GameResult result_ = GameResult::InProgress;
+    GameEndReason endReason_ = GameEndReason::None;
+
+    // Records checkmate or stalemate if the position has become one. Called
+    // after every move, and once when a game is loaded from FEN, since that
+    // position may already be finished.
+    void updateResultFromPosition();
 };
