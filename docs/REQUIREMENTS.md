@@ -3,9 +3,8 @@
 Transcribed from the lecturer's requirements document. Every item not marked
 optional is mandatory. Use this for the final self-check before zipping.
 
-**Status: 87 of 89 done.** The two outstanding are §25, which needs a second
-computer on the same network, and §84, which needs the student's ID number for
-the zip filename. Both are marked in place below.
+**Status: 88 of 89 done.** The only one outstanding is §25, which needs a second
+computer on the same network. It is marked in place below.
 
 Everything else has been verified rather than assumed — the rules against the
 standard perft suite, the Bot's difficulty ordering by playing the levels
@@ -131,8 +130,12 @@ known to be complete.
 - [x] 81. Personal project; each student submits separately
 - [x] 82. All Client and Server source including ProvidedGUI, plus both executables and the Stockfish binary used
 - [x] 83. A README letting the checker compile and run with no guesswork: compiling, running the Server, where IP and port appear, running a Client and connecting, starting a Local Game, starting a Bot game and choosing difficulty, starting an Online Game and using matchmaking, running several Clients to demonstrate concurrent online games, how Stockfish is integrated, and any other environment requirement
-- [ ] 84. All files in a zip named `<ID>.zip` — waiting on the student's ID
-      number. Everything else is staged and verified; the zip comes to 82.3 MB.
+- [x] 84. All files in a zip named `<ID>.zip` — built as `216908467.zip` in the
+      project root, 82.3 MB, 89 entries, everything inside one top-level folder
+      `216908467/` so that both the PDF's wording ("in a folder named with your
+      ID") and this one are satisfied. Extracted and run from elsewhere with
+      MSYS2 off `PATH`; the supplied files are byte-identical after the round
+      trip and Stockfish's SHA-256 matches the README.
 
 ## Build environment
 - [x] 85. C++17 under MSYS2 UCRT64 / MinGW — verified, g++ 16.2.0

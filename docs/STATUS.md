@@ -5,18 +5,25 @@ of the last one can read this and know exactly where things stand.
 
 ---
 
-**Phase:** 7 — submission (§82-84). **All but the final zip is done.**
-Phases 1-6 are done. **87 of the 89 requirements are complete.**
+**Phase:** 7 — submission (§82-84). **Done. The zip is built and tested.**
+Phases 1-6 are done. **88 of the 89 requirements are complete.**
 
-**The two that are not, and what each needs:**
+**`216908467.zip` is in the project root** — 82.3 MB, 89 entries, everything
+inside one top-level folder `216908467/`. It is gitignored, so rebuild it from
+the whitelist in `docs/PLAN.md` if anything changes.
 
-1. **§25 — a second computer.** Server and one Client here, a second Client on
-   another machine on the same network, using the LAN address the Server prints.
-   The student asked to be reminded of this at the end; this is that reminder.
-   Nothing in the code assumes one machine, and two Clients on this one already
-   play each other, but the requirement asks for two machines.
-2. **§84 — the student's ID number**, for the zip filename. Everything else is
-   staged and verified.
+**The one requirement left is §25 — online play across two computers.** Server
+and one Client here, a second Client on another machine on the same network,
+using the LAN address the Server prints. The student asked to be reminded of
+this at the end; this is that reminder, and it is the only thing between the
+project and finished. Nothing in the code assumes one machine, and two Clients
+on this one already play each other through the Server, but the requirement asks
+for two machines and only a second machine can answer it.
+
+If it turns out the two machines cannot see each other, the usual cause is
+Windows Firewall rather than the code: allow `server.exe` on private networks
+when prompted, and check both machines are on the same network rather than one
+being on a guest or mobile connection.
 
 **In progress:** nothing.
 

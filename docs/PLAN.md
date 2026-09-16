@@ -165,9 +165,20 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
       its addresses, a Client connects and reaches the menu, and a Bot game
       launches `stockfish.exe` from the staged folder's own `stockfish/` —
       proving the path is relative to the executable — leaving no orphan behind.
-- [ ] Zip named `<your ID>.zip` (§84) — needs the ID number. The PDF asks for
-      the files "in a folder named with your ID", so the zip should hold a
-      single top-level folder of that name, which satisfies both readings.
+- [x] Zip named `<your ID>.zip` (§84) — `216908467.zip`, 82.3 MB, 89 entries,
+      everything inside one top-level folder `216908467/`, which satisfies both
+      the PDF's "in a folder named with your ID" and this item's wording.
+      Extracted elsewhere and run from there with MSYS2 off `PATH`: both
+      programs work, Stockfish launches from the unzipped copy, the supplied
+      files are byte-identical after the round trip, and Stockfish's SHA-256
+      matches the README.
+- [x] Entry names use forward slashes. Worth a line because the obvious way to
+      build the archive gets this wrong: .NET Framework's
+      `ZipFile.CreateFromDirectory` writes the platform separator, producing
+      entries like `216908467\client.exe`. Windows Explorer copes; the ZIP
+      format does not allow it, and other tools extract such an archive as flat
+      files with backslashes in their names. The zip is built entry by entry
+      instead.
 
 ### What the zip contains — a whitelist, not a blacklist
 
