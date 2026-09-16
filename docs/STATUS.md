@@ -9,18 +9,26 @@ of the last one can read this and know exactly where things stand.
 
 **In progress:** nothing.
 
-**Last completed:** Phase 2's first item, the minimal Server (§11) —
-`server/Server.h/.cpp` and `server/main.cpp`. It binds a port, prints the
-addresses a Client should use, accepts any number of clients, logs connections
-and disconnections, and survives both.
+**Last completed:** Phase 2 items 2-4 — the Client's console connection screen
+(§7), its error messages (§9), and the retry / change address / change port /
+exit choices after a failure (§10). New files `client/ConsoleInput.h/.cpp`,
+`client/ServerConnection.h/.cpp`, `client/ConnectionScreen.h/.cpp`,
+`client/main.cpp`.
 
-Tested by running it and connecting three real TCP clients: two at once, one
-sending an unknown message, disconnecting in a different order than they
-connected, and a new client arriving after an earlier one left. Also tested
-with a non-numeric port argument, an out-of-range port, and a second server
-told to take a port already in use.
+Before that, Phase 2's first item: the minimal Server (§11).
+
+**Verified by running both programs together**, driving the client's console
+from a file: connecting successfully on the first try; a wrong port then
+"change the port" then connecting; an unreachable address then "change the
+address" then connecting; "try again" twice then exit; and rubbish typed at
+every prompt. The server's log confirms each connection and each clean
+disconnection. The server was also tested with a non-numeric port argument, an
+out-of-range port, and a second copy told to take a port already in use.
 
 **Files mid-edit:** none. Working tree clean.
+
+**Note:** `client.exe` currently exits as soon as it connects. That is the next
+item, not a fault — the main menu is what comes after the gate.
 
 ## What exists now
 
@@ -58,14 +66,17 @@ no GUI, no Client and no Server. That starts in Phase 2.
 
 ## Next step
 
-Phase 2, second item: the Client's **console connection screen** (§7) — ask for
-the server IP and port, connect, and on failure give a clear message (§9) and
-the choice to retry, change the IP, change the port, or exit (§10). The main
-menu (§8, §12) is only reachable once a connection has succeeded.
+Phase 2, fifth item: the **main menu** (§8, §12) — Local Game, Player vs Bot,
+Online Game, Exit — reachable only after the connection screen has succeeded,
+which it now enforces.
 
-After that: the GUI event loop wired to `ChessGame`, then the Local Game
-itself (§13, §17), resignation with its Confirm/No dialog (§53-56), and the
-draw offer shown to the opponent on the same client (§48-49, §51-52).
+Then the GUI event loop wired to `ChessGame`, the Local Game itself (§13, §17),
+resignation with its Confirm/No dialog (§53-56), and the draw offer shown to
+the opponent on the same client (§48-49, §51-52).
+
+Worth deciding when the menu is built: what the Client does if the player picks
+Local Game or Player vs Bot and the connection then drops. Neither mode needs
+the Server at all (§17-18), so losing it mid-game should not disturb them.
 
 **This is the first point where a person has to look at the screen.** The
 rules engine was verifiable by counting positions; a GUI is not. See

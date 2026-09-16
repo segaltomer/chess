@@ -370,3 +370,50 @@ never among them. Windows reports a missing DLL by killing the process before
 `main` runs, with no message on the console. Worth remembering, because the
 symptom looks like a crash in code that has not executed yet. The README's
 `ldd` line now collects from `client.exe` and `server.exe`.
+
+---
+
+## The connection screen · `client/ConnectionScreen`, `ServerConnection`, `ConsoleInput` · §7-10
+
+§8 makes this a **gate**, not a step: the main menu is unreachable until a
+connection has actually succeeded. So `ConnectionScreen::run` loops until one
+of exactly two things happens — it connects, or the player leaves. There is no
+third way out, and that is the requirement rather than a stylistic choice.
+
+It is a class rather than a function because it has to remember the address and
+port between attempts. §10 requires "try again", "change the address" and
+"change the port" to be three separate offers, and the last two mean nothing
+without remembering what the other one was.
+
+`ServerConnection` wraps the socket and closes it in its destructor (§76), so
+no exit path — including an exception on the way out of `main` — leaves it
+open. It is non-copyable, because two objects believing they own one connection
+is a bug waiting to happen.
+
+Three separate §9 error cases, caught in three different places:
+
+- **A bad address** is caught the moment it is typed, by resolving it there
+  rather than at connection time. Otherwise a typo would look identical to the
+  server being switched off.
+- **A bad port** is caught by `ConsoleInput::readNumberInRange`, which rejects
+  letters, an empty line, a number out of range, *and* trailing rubbish —
+  `std::stoi` alone reads "53000abc" as 53000 and silently drops the rest.
+- **Nothing answering** is caught by the connection attempt, and the message
+  lists what to check rather than saying "error".
+
+**The tricky part, and it is not obvious:** typing the *port* into the address
+box passes validation. Winsock reads a bare number as a packed 32-bit address,
+so `sf::IpAddress::resolve("53000")` cheerfully succeeds and yields 0.0.207.8,
+and the player is then told that address did not answer — which is true and
+completely unhelpful. It is the easiest mistake to make on this screen, so an
+all-digits address is rejected with a message naming the actual mistake.
+
+There is a second subtlety in `ConsoleInput`: every read distinguishes *bad
+input* from *the input stream having ended*. Bad input is re-prompted; an ended
+stream must not be. A loop that keeps asking a stream which can never answer
+again spins forever at full processor, and that is exactly what happens when
+the console window is closed or input is piped from a file that runs out.
+
+**The connect timeout** is five seconds. Without one, an address with no
+machine at it can take most of a minute to give up, which is indistinguishable
+from a hung program.
