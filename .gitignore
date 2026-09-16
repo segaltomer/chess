@@ -10,8 +10,18 @@ build/
 # anyway - it is built from the whitelist in docs/PLAN.md when needed.
 *.zip
 
-# Chess engine binary (shipped with the submission, not tracked here)
-stockfish*
+# The Stockfish engine binary only - 98 MB, past GitHub's per-file limit. It is
+# shipped in the submission zip and recoverable anyway: the README records its
+# version and SHA-256.
+#
+# The path is written out in full, and anchored with a leading slash, because
+# the bare pattern "stockfish*" that used to be here also matched
+# client/StockfishEngine.cpp and client/StockfishEngine.h - git on Windows has
+# core.ignorecase=true, so it ignores case when matching. Those two files were
+# silently missing from every commit until it was noticed. Stockfish's licence
+# and AUTHORS files stay tracked: they are tiny, and the GPL requires them to be
+# shipped with the binary.
+/stockfish/stockfish.exe
 
 # Tool and editor local state - never part of the project
 .claude/
