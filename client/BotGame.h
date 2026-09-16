@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BotDifficulty.h"
-#include "Game.h"
+#include "ClientValidatedGame.h"
 #include "StockfishEngine.h"
 
 // A game against Stockfish (§14, §18).
@@ -15,7 +15,7 @@
 // The engine is passed in rather than owned, because starting it loads a large
 // neural network and can fail. Whoever creates the game checks that it started
 // before opening a board window (§80).
-class BotGame : public Game {
+class BotGame : public ClientValidatedGame {
 public:
     BotGame(StockfishEngine& engine, const BotSettings& settings, Color humanColour);
 

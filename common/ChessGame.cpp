@@ -151,6 +151,18 @@ void ChessGame::agreeDraw() {
 }
 
 
+void ChessGame::endByDisconnection(Color disconnectedColour) {
+    if (isOver()) {
+        return;
+    }
+
+    const bool whiteDisconnected = (disconnectedColour == Color::White);
+
+    result_ = whiteDisconnected ? GameResult::BlackWins : GameResult::WhiteWins;
+    endReason_ = GameEndReason::Disconnection;
+}
+
+
 bool ChessGame::isOver() const {
     return result_ != GameResult::InProgress;
 }
@@ -189,6 +201,12 @@ std::string ChessGame::resultDetail() const {
             const bool whiteResigned = (result_ == GameResult::BlackWins);
 
             return whiteResigned ? "White resigned" : "Black resigned";
+        }
+
+        case GameEndReason::Disconnection: {
+            const bool whiteDisconnected = (result_ == GameResult::BlackWins);
+
+            return whiteDisconnected ? "White disconnected" : "Black disconnected";
         }
 
         case GameEndReason::None: break;

@@ -13,7 +13,9 @@ enum class GameResult { InProgress, WhiteWins, BlackWins, Draw };
 // Why it finished. §39 requires the reason as well as the result, because
 // "Draw" alone does not tell a player whether they agreed one or were
 // stalemated, and "Black wins" does not say whether White was mated or resigned.
-enum class GameEndReason { None, Checkmate, Stalemate, Resignation, DrawAgreed };
+enum class GameEndReason {
+    None, Checkmate, Stalemate, Resignation, DrawAgreed, Disconnection
+};
 
 // One game of chess: the position, whose turn it is, and the rules being
 // enforced on both. This object is the authority — a move it refuses did not
@@ -88,6 +90,12 @@ public:
     // the caller's business — on one Client for a Local game, through the
     // Server for an Online one. This only records the outcome.
     void agreeDraw();
+
+    // §66: the named colour has lost its connection, so the game ends and the
+    // other player wins. Kept separate from resign() because the outcome is the
+    // same but the reason is not, and telling the remaining player "your
+    // opponent resigned" when their opponent's network dropped would be wrong.
+    void endByDisconnection(Color disconnectedColour);
 
     bool isOver() const;
     GameResult result() const;

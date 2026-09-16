@@ -1,7 +1,11 @@
 #pragma once
 
+#include "HostedGame.h"
+#include "Matchmaker.h"
+
 #include <SFML/Network.hpp>
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -19,10 +23,10 @@
 // bring the server down, and thread-per-client over unlocked shared game state
 // is the classic way to fail exactly that.
 //
-// At this stage the server accepts and tracks connections and nothing else.
-// Matchmaking and online games arrive in Phase 4, which is why clients are
-// already held in a container: §60 forbids assuming only one game exists, and
-// that is far cheaper to honour from the first line than to retrofit.
+// Games live in a container keyed by id, never in single variables, because
+// §60 forbids assuming only one game exists. Every message a client sends
+// names the game it concerns, and every reply goes out through helpers that
+// refuse to send to anyone who is not a player of that game (§59).
 class Server {
 public:
     // Binds the port and starts listening immediately, so a Server that exists
@@ -53,10 +57,67 @@ private:
     std::vector<ClientConnection> clients_;
     int nextClientId_ = 1;
 
+    Matchmaker matchmaker_;
+
+    // §60: games by id, so nothing in this file can assume there is only one.
+    std::map<int, HostedGame> games_;
+    int nextGameId_ = 1;
+
     void acceptNewClient();
     void receiveFromClients();
+
+    // Reads one message and acts on it. Anything unrecognised, or that does not
+    // fit the client's current state, is logged and ignored rather than trusted
+    // (§67).
+    void handleMessage(int clientId, sf::Packet& packet);
+
+    void handleFindGame(int clientId);
+    void handleCancelFindGame(int clientId);
+    void handleMoveRequest(int clientId, sf::Packet& packet);
+    void handleOfferDraw(int clientId, sf::Packet& packet);
+    void handleDrawResponse(int clientId, sf::Packet& packet);
+    void handleResign(int clientId, sf::Packet& packet);
+
+    // §41: pairs two waiting clients, creates the game and tells them both.
+    void pairWaitingClients();
+
+    // Everything that must happen after a client has gone: it leaves the
+    // waiting list, and any game it was playing ends with the other player told
+    // (§42, §65-66).
+    //
+    // Called once the connection has already been dropped, so that nothing here
+    // tries to send to it. Its console description is therefore passed in,
+    // there being nothing left to look it up from.
+    void handleClientGone(int clientId, const std::string& description);
+
+    // The game this client is playing, or nullptr. Found by asking the games
+    // rather than by keeping a second client-to-game table, because a second
+    // table is a second thing that can fall out of step with the first.
+    HostedGame* findGameOfClient(int clientId);
+
+    // The game with this id, but only if this client is actually a player in
+    // it. This is where §59 is enforced: a client asking about somebody else's
+    // game is refused here, once, rather than at each of the call sites.
+    HostedGame* findGameForPlayer(int clientId, int gameId);
+
+    ClientConnection* findClient(int clientId);
+
+    void sendTo(int clientId, sf::Packet packet);
+
+    // Sends the same packet to both players of a game (§22 state updates).
+    void sendToBothPlayers(const HostedGame& game, sf::Packet packet);
+
+    // Sends the current position to both players, and, if the game has just
+    // finished, the result as well — after which the game is forgotten.
+    void broadcastGameState(HostedGame& game);
+
+    // The name the other player sees. Client ids are all the server knows about
+    // a player, and §41 asks only that both are told the game started.
+    static std::string playerName(int clientId);
 
     // "client 3 (192.168.1.20:51514)" — how a client is named in the console,
     // so that the log of a busy server can be read (§68-70).
     static std::string describe(const ClientConnection& client);
+
+    std::string describeById(int clientId);
 };

@@ -70,15 +70,25 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
 
 ## Phase 4 — Server and Online (§11, 21-25, 40-42, 50, 56-63)
 
-- [ ] TCP listener; print listening IP and port to console (§11)
-- [ ] Protocol implemented per DESIGN.md §4 (§61-63)
-- [ ] Multiple simultaneous clients (§57)
-- [ ] Multiple independent concurrent games; no cross-talk (§58-60)
-- [ ] Matchmaking: waiting state, pairing, colour assignment, notify both (§40-41)
-- [ ] Free-client rules; remove on cancel or disconnect (§42)
-- [ ] Server owns board, turn, validation for online games (§22)
-- [ ] Client renders server state only, never applies a move locally (§23-24)
-- [ ] Resign and draw offers relayed through the Server (§50, §56)
+- [x] TCP listener; print listening IP and port to console (§11)
+- [x] Protocol implemented per DESIGN.md §4 (§61-63) — `common/Protocol`
+- [x] `Game` hierarchy split so an online game has no rules engine to misuse;
+      DESIGN decision 2 rewritten (§73)
+- [x] Multiple simultaneous clients (§57)
+- [x] Multiple independent concurrent games; no cross-talk (§58-60) — checked
+      with two games running at once, including a client aiming a move at a
+      game it is not in
+- [x] Matchmaking: waiting state, pairing, colour assignment, notify both (§40-41)
+- [x] Free-client rules; remove on cancel or disconnect (§42)
+- [x] Server owns board, turn, validation for online games (§22) — out-of-turn
+      and illegal moves both rejected by the Server
+- [x] Client renders server state only, never applies a move locally (§23-24)
+- [x] Resign and draw offers relayed through the Server (§50, §56)
+- [x] Automated protocol test: 67 checks over matchmaking, validation, game
+      isolation, draw offers, resignation, disconnection and malformed input
+- [ ] **Student to confirm by playing it.** Two clients and one server at once:
+      play a game through both windows, try moving out of turn, offer a draw
+      and both accept and decline it, resign, and close one client mid-game.
 - [ ] Verified between two machines on one network (§25)
 
 ## Phase 5 — robustness (§64-70)

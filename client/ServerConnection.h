@@ -29,8 +29,26 @@ public:
     // Where we are connected, for display. Empty when not connected.
     std::string describe() const;
 
-    // The socket itself, for the code that will speak the protocol in Phase 4.
-    sf::TcpSocket& socket();
+    // What a poll for an incoming message found.
+    enum class ReceiveResult {
+        Nothing,        // nothing has arrived yet; try again later
+        Received,       // `packet` now holds one whole message
+        Disconnected    // the Server has gone (§65)
+    };
+
+    // Sends one message. False if the connection has gone.
+    //
+    // The socket is non-blocking, so a large message can be sent in pieces;
+    // this keeps offering the same packet until the whole of it has gone, which
+    // is what SFML requires. Our messages are far too small for that to happen
+    // in practice, but a partial send that was ignored would corrupt the stream
+    // for every message after it.
+    bool send(sf::Packet& packet);
+
+    // Looks for a message without waiting. The board window has to keep drawing
+    // and responding to the mouse while an online game waits on the Server, so
+    // a blocking read here would freeze it (§65).
+    ReceiveResult receive(sf::Packet& packet);
 
 private:
     sf::TcpSocket socket_;

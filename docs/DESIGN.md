@@ -80,27 +80,52 @@ holds the `ChessGame` for that match, because §22 says the Server validates.
 Local and Bot games hold their own, because §17–18 say the Client validates
 those. Each mode ends up with exactly the authority its requirement gives it.
 
-**As built (Phase 3).** `client/Game` is the base class and holds the whole
-shared loop: reading clicks, turning them into moves, the promotion dialog, the
-resign confirmation, the draw offer, and deciding when to show the result.
-`play()` is not virtual — subclasses cannot reimplement the parts that must
-behave identically in every mode (§6). They fill in four small hooks instead:
+**As built (Phase 4).** There are three levels, and the middle one exists
+precisely to keep the promise above.
 
-| Hook | What it decides |
-|---|---|
-| `onGameStarted` | player names, whether Offer Draw belongs in this mode |
-| `onOpponentTurn` | how a non-human opponent takes its turn; empty for Local |
-| `resigningColour` | whose Resign button it is |
-| `onDrawOffered` | what an offer does; empty where offers do not apply |
+```text
+Game                  the board window and the shape of an interaction
+├── ClientValidatedGame   owns a ChessGame; validates here (§17-18)
+│   ├── LocalGame
+│   └── BotGame
+└── OnlineGame            owns no ChessGame; the Server validates (§22-24)
+```
 
-`LocalGame` is 30 lines and `BotGame` about 90; everything else is shared. The
-base class was deliberately **not** written in Phase 2, when only `LocalGame`
-existed — the seams were chosen in Phase 3, once `BotGame` gave a second real
-case to generalise from rather than a guess about one.
+`Game` holds the whole shared loop: reading clicks, turning them into moves, the
+promotion dialog, the resign confirmation, the draw offer, and deciding when to
+show the result. `play()` is not virtual — subclasses cannot reimplement the
+parts that must behave identically in every mode (§6). What `Game` deliberately
+does **not** hold is a `ChessGame`.
 
-`OnlineGame` joins them in Phase 4, and is the case that decided the shape
-above: it will override `onOpponentTurn` to read from the Server, and it will
-have no `ChessGame` of its own to mis-use.
+> **Changed in Phase 4.** Through Phase 3 the base class *did* hold one, because
+> both modes that existed then wanted it. That directly contradicted the
+> paragraph above, and the contradiction would have surfaced as a bug: a
+> two-level hierarchy would have handed `OnlineGame` an inherited `makeMove`,
+> which is the exact call §24 forbids it. Adding the middle class instead of
+> writing "remember not to call that" is the whole point — `OnlineGame` now has
+> no rules engine to misuse, and the compiler is what enforces it rather than
+> care.
+
+The hooks come in two kinds: ones asking the mode what to draw
+(`boardForDisplay`, `isOver`, `turnText`, `statusText`, `resultTitle`,
+`resultDetail`), and ones telling it what the player asked for (`onMoveChosen`,
+`onResignConfirmed`, `onDrawOffered`, `onDrawResponse`, `onOpponentTurn`,
+`needsPromotionChoice`). That split is what lets the same loop serve a mode that
+decides moves itself and one that may only ask.
+
+`ClientValidatedGame` answers every question of the first kind from its
+`ChessGame`, and turns every request of the second kind into a call on it.
+`LocalGame` is then 30 lines and `BotGame` about 90.
+
+`OnlineGame` answers the first kind from the last `GameState` the Server sent —
+64 characters it replaces wholesale and never edits — and turns the second kind
+into messages. A click sends a `MoveRequest` and changes nothing on screen; the
+piece moves only when a position in which it has moved comes back.
+
+The base class was deliberately **not** written in Phase 2, when only
+`LocalGame` existed, and the split above was not written in Phase 3 either. Each
+seam was cut when a second real case made it visible, rather than guessed at
+from one.
 
 ---
 
@@ -133,27 +158,49 @@ strings without hand-written parsing. Plain text over TCP would mean buffering
 partial reads and splitting on newlines myself, which is a well-known source of
 bugs for no benefit here.
 
-Message types needed (§62):
+Message types, as built (§62). All of it lives in `common/Protocol.h`, written
+and read by the same operators so the two ends cannot drift apart:
 
 | Direction | Message | Carries |
 |---|---|---|
-| C→S | `Hello` | — |
 | C→S | `FindGame` | — |
 | C→S | `CancelFindGame` | — |
-| S→C | `Waiting` | — |
-| S→C | `GameStarted` | game id, my colour, opponent name |
 | C→S | `MoveRequest` | game id, from, to, optional promotion |
-| S→C | `GameState` | game id, 64 squares, side to move, status text |
-| S→C | `MoveRejected` | game id, reason |
 | C→S | `OfferDraw` | game id |
-| S→C | `DrawOffered` | game id |
 | C→S | `DrawResponse` | game id, accepted |
 | C→S | `Resign` | game id |
-| S→C | `GameOver` | game id, result, reason |
-| S→C | `OpponentDisconnected` | game id |
+| S→C | `Waiting` | — |
+| S→C | `GameStarted` | game id, my colour, opponent name |
+| S→C | `GameState` | game id, 64 squares, side to move, in check |
+| S→C | `MoveRejected` | game id, reason |
+| S→C | `DrawOffered` | game id |
+| S→C | `DrawDeclined` | game id |
+| S→C | `GameOver` | game id, result title, reason |
 
-Every message carries the game id, so §59 — never send an update to a client
-outside that game — is checkable in one place.
+Every in-game message carries the game id, so §59 — never send an update to a
+client outside that game — is checkable in one place. On the Server that place
+is `findGameForPlayer`, which refuses to find a game the asking client is not
+playing in.
+
+> **Three changes from the list first written here.**
+>
+> `Hello` is gone. It carried nothing: the TCP connection *is* the hello, and
+> the Server assigns the client its id on accept. An unused message is protocol
+> surface that still has to be explained and kept working.
+>
+> `OpponentDisconnected` is gone, folded into `GameOver`. A disconnection ends
+> the game, and `GameOver` already carries a result and a reason — so it says
+> "White disconnected" the same way it says "White resigned", and the Client
+> needs one ending path rather than two. This did mean adding
+> `GameEndReason::Disconnection` to `ChessGame`, because telling the remaining
+> player their opponent *resigned* when the network dropped would be a lie.
+>
+> `DrawDeclined` is new. Without it, a player who offers a draw and is refused
+> is told nothing at all and is left wondering whether the offer ever arrived.
+>
+> `GameState` sends the side to move rather than a finished caption, because the
+> two Clients word it differently — "Your move" against "Player 4 to move" — and
+> only each Client knows which of the two it is.
 
 ---
 

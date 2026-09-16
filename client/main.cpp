@@ -3,6 +3,7 @@
 #include "ConnectionScreen.h"
 #include "LocalGame.h"
 #include "MainMenu.h"
+#include "OnlineGame.h"
 #include "ServerConnection.h"
 #include "StockfishEngine.h"
 
@@ -31,8 +32,23 @@ void runBotGame() {
     botGame.play();
 }
 
+// §15, §21: the Server does the pairing, so all the Client has to do is open
+// the board and ask. Losing the connection is caught here rather than inside the
+// game, because without it there is nothing to ask (§65).
+void runOnlineGame(ServerConnection& connection) {
+    if (!connection.isConnected()) {
+        std::cout << "\nThe connection to the server has been lost, so an "
+                     "online game cannot be started.\n";
+        std::cout << "Restart the client to connect again." << std::endl;
+        return;
+    }
+
+    OnlineGame onlineGame(connection);
+    onlineGame.play();
+}
+
 // Runs the chosen mode. Returns false when the player wants to leave.
-bool runChoice(MainMenuChoice choice) {
+bool runChoice(MainMenuChoice choice, ServerConnection& connection) {
     switch (choice) {
         case MainMenuChoice::LocalGame: {
             LocalGame localGame;
@@ -45,7 +61,7 @@ bool runChoice(MainMenuChoice choice) {
             return true;
 
         case MainMenuChoice::OnlineGame:
-            std::cout << "\nOnline Game is not available yet.\n";
+            runOnlineGame(connection);
             return true;
 
         case MainMenuChoice::Exit:
@@ -80,7 +96,7 @@ int main() {
             break;
         }
 
-        if (!runChoice(choice)) {
+        if (!runChoice(choice, connection)) {
             break;
         }
     }

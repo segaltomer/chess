@@ -596,3 +596,111 @@ queen every time, so it separated nothing. Worth recording because the idea is
 tempting: a beginner's trap is not a strength test, since avoiding one specific
 known trap is exactly the kind of thing even a deliberately weakened engine
 does by accident.
+
+
+## The protocol · `common/Protocol` · §61-63
+
+**What it does.** Defines every message the Client and Server send each other: a
+one-byte type followed by that type's fields, packed into an `sf::Packet`.
+
+**Why `sf::Packet`.** TCP is a stream of bytes with no idea where one message
+ends and the next begins. Send two messages quickly and they can arrive stuck
+together, or one can arrive in halves. A hand-written protocol has to buffer
+partial reads and split them itself, which is a classic source of bugs for no
+benefit in a chess project. `sf::Packet` does that framing, and packs integers
+and strings with no parsing code.
+
+**The tricky part — the format lives in exactly one file.** Each message is a
+small struct with an `operator<<` and an `operator>>` next to each other, so the
+side that writes a field and the side that reads it are three lines apart. Had
+the Server written fields inline and the Client read them inline, the two would
+be in different files and would drift the first time a field was added.
+
+Two details that are easy to get wrong across separately compiled programs. The
+type numbers are written out explicitly (`FindGame = 1`) rather than left to the
+compiler, so inserting a name in the middle of the list cannot silently
+renumber every message after it. And colours and piece types travel as a byte
+through a converter that maps anything unrecognised to `None`, so a corrupt
+message cannot produce a piece type that does not exist.
+
+**`isKnownMessageType`** exists for §67: a type byte outside the list means the
+message is malformed or came from something that is not our Client, and it is
+refused before anything reads further into it.
+
+
+## The Server: matchmaking and hosted games · `server/` · §21-25, §40-42, §57-60
+
+**What it does.** Pairs waiting Clients, creates a game for each pair, validates
+every move, and keeps the two players of each game up to date.
+
+**The shape.** `Matchmaker` holds only the list of Clients waiting to be paired.
+`HostedGame` is one game: the `ChessGame`, the two client ids, and any
+outstanding draw offer. `Server` owns the sockets, decides what each arriving
+message means, and logs.
+
+**Why games are found by searching rather than by a lookup table.** The Server
+could keep a client-id-to-game map alongside the games themselves. It does not,
+because that is a second structure that has to be updated everywhere the first
+one is, and the day it is not, a client is in a game the map says it is not in.
+Searching the games for the one containing a client cannot fall out of step
+with anything. At the scale of a classroom demonstration the cost is nil.
+
+**Where §59 is enforced — one function.** `findGameForPlayer(clientId, gameId)`
+returns the game only if that client is one of its two players. Every handler
+starts by calling it, so "never tell a client about a game it is not in" is one
+check in one place rather than a rule to remember at each of a dozen sends. A
+client sending a move for somebody else's game gets a log line and nothing else.
+
+**The tricky part — a disconnection is handled after the client is gone, not
+before.** The order matters. The connection is taken out of the selector and out
+of the client list *first*, and only then does the Server end that client's game
+and tell the opponent. Done the other way round, ending the game tries to send
+the result to the player who just vanished, which logs a confusing "could not
+send" line about a client already reported as disconnected.
+
+The other half of that is §64: a closed socket reports itself ready forever, so
+a client that has gone must leave the selector as well as the list. Leaving it
+in the selector turns the loop into a busy spin at full processor use.
+
+**Finished games are dropped** once both players have been told. Nothing more
+will ever be sent about them, and a server left running all day would otherwise
+accumulate every game it had ever hosted.
+
+
+## The Client's online game · `client/OnlineGame` · §22-25, §50, §56
+
+**What it does.** Draws the position the Server sent, and turns clicks into
+requests.
+
+**Why it has no `ChessGame`, and what that buys.** §24 says the Client must
+never apply an online move itself. The way to satisfy that is not to be careful
+— it is to have nothing to be careful with. `OnlineGame` inherits `Game`, not
+`ClientValidatedGame`, so there is no rules engine anywhere in the object and
+no `makeMove` to call by accident. The board is 64 characters that are only
+ever replaced wholesale from a `GameState` message.
+
+So a click does not move a piece. It sends a `MoveRequest` and the screen does
+not change. The piece appears to move only when the Server sends a position in
+which it has moved, which is §24 stated as a mechanism rather than a promise.
+
+**The tricky part — the window opens before there is a game.** The alternative
+was to wait at the console for the pairing, but then cancelling a search (§42)
+means watching the keyboard while blocked on a socket, which on Windows needs
+platform-specific console code. Opening the board immediately, showing "Waiting
+for an opponent...", and treating a window close as the cancel avoids all of
+that and reuses the loop that already exists. The same idea covers walking out
+of a live game: closing the window then sends `Resign`, because leaving a game
+in progress concedes it, and the alternative is an opponent waiting forever for
+a move that is not coming.
+
+**Why the socket is polled and never blocked on.** The board window has to keep
+drawing and answering the mouse while it waits for the Server. A blocking read
+would freeze it exactly as a blocking engine search would in a Bot game — the
+same problem as `StockfishEngine`, solved the same way.
+
+**Two guards worth knowing.** The board is disabled unless it is genuinely this
+player's turn *and* no earlier request is still unanswered, so a player cannot
+fire off a second move believing the first has happened. And the promotion
+dialog is decided from the picture on screen — is that my pawn, is it landing on
+the far rank — which is display logic, not a rules decision: if the Client
+guesses wrong the Server rejects the move anyway.

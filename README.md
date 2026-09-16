@@ -39,7 +39,7 @@ Provided GUI example:
 build_example.bat
 ```
 
-Client (once `client/` contains sources):
+Client:
 
 ```bash
 g++ -std=c++17 common/*.cpp client/*.cpp ProvidedGUI/ChessFrontend.cpp -IProvidedGUI \
@@ -65,7 +65,36 @@ The server links no `sfml-graphics`, since it displays no GUI.
 It prints the port and the two addresses a Client can use — `127.0.0.1` for a
 Client on the same machine, and this machine's LAN address for a Client on
 another. Those are what you type into the Client's connection screen. It then
-waits, logging every connection and disconnection, until you close it.
+waits, logging every connection, pairing, move, draw offer, resignation and
+disconnection, until you close it.
+
+### Running the client
+
+```bash
+./client.exe
+```
+
+It asks for the server's address and port first; the main menu appears only
+once that connection succeeds. The menu offers a Local Game (two players at one
+keyboard), Player vs Bot (choose Easy, Medium or Hard first), Online Game, and
+Exit.
+
+### Playing an online game
+
+Online play needs the server and **two** clients. Start the server, then run
+`client.exe` twice — either twice on this machine, or once here and once on
+another machine on the same network, using the LAN address the server printed.
+
+In both clients, connect and choose **Online Game**. The first to ask sees
+"Waiting for an opponent..."; when the second asks, the server pairs them,
+assigns colours and opens both boards. The server owns the position: a click
+sends a request and the piece moves only once the server has approved it, so
+moving out of turn or making an illegal move simply does nothing on the board
+and is logged as rejected on the server console.
+
+Closing a client's board window while a game is running concedes that game, and
+the opponent is told. The server keeps running, and any other games in progress
+are unaffected.
 
 ### Verifying the chess rules
 
@@ -75,9 +104,14 @@ test positions are published and agreed on across chess engines, so matching
 them all is meaningful evidence rather than a self-written test passing.
 
 ```bash
-g++ -std=c++17 -O2 -Icommon common/*.cpp tests/perft_main.cpp -o perft.exe
+g++ -std=c++17 -O2 -Icommon common/*.cpp tests/perft_main.cpp -o perft.exe \
+    -lsfml-network -lsfml-system
 ./perft.exe
 ```
+
+(`common/` holds the protocol message definitions as well as the rules, so
+anything built from `common/*.cpp` links SFML Network even when, as here, it
+never opens a socket.)
 
 All 26 cases pass — roughly 15 million positions. Re-run it after any change
 under `common/`. `tests/` is a development tool and is not part of the
@@ -91,7 +125,7 @@ is measured rather than judged by eye:
 ```bash
 g++ -std=c++17 -O2 -Icommon -Iclient common/*.cpp client/StockfishEngine.cpp \
     client/BotDifficulty.cpp client/ConsoleInput.cpp tests/bot_match.cpp \
-    -o bot_match.exe
+    -o bot_match.exe -lsfml-network -lsfml-system
 ./bot_match.exe
 ```
 

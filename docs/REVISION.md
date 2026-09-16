@@ -376,3 +376,85 @@ looks like a crash in code that has not executed. The cause was that the
 project's runtime DLLs had been collected from the GUI example, which does no
 networking, so `libsfml-network-3.dll` was never among them. There are 19, and
 they are collected from `client.exe` and `server.exe`.
+
+
+## Phase 4 — the Server and online play
+
+**In an online game, what stops the Client cheating?**
+It has nothing to cheat with. `OnlineGame` has no `ChessGame` in it at all —
+no board it can edit, no move generator, no `makeMove` to call. All it holds is
+the last 64 characters the Server sent, which it replaces wholesale and never
+edits. A click sends a `MoveRequest` and changes nothing on screen; the piece
+moves only when a position in which it has moved comes back from the Server.
+That is §24 turned into something the compiler enforces rather than something
+the programmer remembers.
+
+**You had to change the class hierarchy to achieve that. What was wrong with it?**
+Until Phase 4 the `Game` base class owned a `ChessGame`, because the only two
+modes then written — Local and Bot — both wanted one. But that meant any new
+subclass inherited `makeMove`, and `OnlineGame` is required never to use it.
+Inheriting a capability you are forbidden to exercise is a trap, not a design.
+So a middle class was added: `ClientValidatedGame` holds the rules engine and is
+inherited by `LocalGame` and `BotGame` (§17-18 put validation on the Client for
+those), while `OnlineGame` inherits the bare `Game` and gets no engine.
+`Game` itself kept only the board window and the shape of an interaction.
+
+**Why build the protocol on `sf::Packet` rather than sending text?**
+TCP is a stream of bytes with no message boundaries. Two messages sent quickly
+can arrive stuck together, and one message can arrive in halves. Anything
+hand-written therefore has to buffer partial reads and work out where each
+message ends — a well-known source of bugs, and networking is not what this
+project is being marked on. `sf::Packet` does that framing itself and packs
+integers and strings with no parsing code.
+
+**How do you stop one game's messages reaching another game's players (§59)?**
+Every in-game message carries its game id, and on the Server every handler
+starts by calling one function: `findGameForPlayer(clientId, gameId)`. It
+returns the game only if that client is one of its two players, so a client
+asking about somebody else's game is refused in one place rather than at each
+of a dozen sends. A client sending a move for a game it is not in gets a log
+line and no reply — which is tested.
+
+**Why does the Server run on one thread instead of one per client?**
+Because a thread per client means shared game state across threads, which means
+locks, and §64 says one client disconnecting must never bring the Server down.
+A single thread with `sf::SocketSelector` has no shared state, so an entire
+family of crash cannot happen. `wait()` sleeps until some socket has something
+to say, so an idle server with many clients still uses no processor time.
+
+**Something about a disconnected socket can spin the Server at 100% CPU. What?**
+A closed socket reports itself *ready* to the selector forever. If a client that
+has gone is removed from the list but left in the selector, `wait()` returns
+immediately every time, the loop finds nothing to read, and it spins. So a
+disconnecting client has to leave the selector as well as the list. The order
+also matters: the connection is dropped first and only then is its game ended,
+otherwise the Server tries to send the result to the player who just vanished.
+
+**A player disconnects mid-game. What does the other one see, and why not just
+"resigned"?**
+The Server ends that game and sends the remaining player a `GameOver` saying,
+for example, "Black wins!" and "White disconnected". It is deliberately not
+worded as a resignation, because telling somebody their opponent resigned when
+in fact the network dropped would be false. That meant adding
+`GameEndReason::Disconnection` to `ChessGame` alongside resignation and
+agreed draws.
+
+**How can a player cancel a search for an opponent, given the console is not
+watching the keyboard?**
+The board window opens straight away, before there is an opponent, showing
+"Waiting for an opponent...". Closing it sends `CancelFindGame`. Waiting at the
+console instead would mean watching the keyboard while blocked on a socket,
+which needs platform-specific console code; this reuses the loop that already
+exists. The same mechanism covers leaving a live game — closing the window then
+sends `Resign`, because walking away from a game in progress concedes it rather
+than leaving the opponent waiting forever.
+
+**How was any of this tested without two people and two computers?**
+With a program that connects as several clients at once and checks the Server's
+answers — 67 checks in all. It covers matchmaking and the waiting state, moves
+played out of turn and moves that are illegal, two games running at once with no
+cross-talk, a client aiming a move at a game it is not in, draw offers accepted
+and declined, resignation, a client disconnecting mid-game, and four kinds of
+malformed message, after which the Server is checked to still be pairing new
+clients. What it cannot check is the GUI wiring and §25, two machines on one
+network; those need hands.

@@ -47,10 +47,10 @@ Color BotGame::resigningColour() const {
 
 
 void BotGame::onOpponentTurn() {
-    const bool botHasNothingToDo = game_.isOver()
-                                || hasEngineFailed_
-                                || game_.sideToMove() != botColour_;
-    if (botHasNothingToDo) {
+    const bool botShouldNotMove = game_.isOver()
+                               || hasEngineFailed_
+                               || game_.sideToMove() != botColour_;
+    if (botShouldNotMove) {
         return;
     }
 

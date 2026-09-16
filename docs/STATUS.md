@@ -5,17 +5,22 @@ of the last one can read this and know exactly where things stand.
 
 ---
 
-**Phase:** 3 — the Bot (§18-20, §43-47). **Done and confirmed at the board.**
-Phases 1 and 2 are done. **Next up: Phase 4, the Server and Online play.**
+**Phase:** 4 — the Server and Online play (§21-25, §40-42, §50, §56-63).
+**Code complete and verified by an automated protocol test; awaiting the
+student's two-client play-test.** Phases 1-3 are done.
 
 **In progress:** nothing.
 
 **Files mid-edit:** none. Working tree clean.
 
-The student confirmed the Bot replies to every move and that Offer Draw is
-absent in Bot mode. The strength difference was deliberately *not* confirmed by
-eye — the student does not play chess well enough to feel it, and an impression
-would not be evidence. `tests/bot_match.cpp` measures it instead; see below.
+**The two open items**, both needing hands the code does not have:
+
+1. Play an online game through two real client windows — see "How to test it"
+   below. Everything in it has been checked at the protocol level, so this is a
+   check on the GUI wiring, not on the rules or the messages.
+2. §25: run the Server and one Client on this machine and a second Client on
+   another machine on the same network. This is the one requirement that cannot
+   be tested on one computer at all.
 
 ## What is done
 
@@ -43,6 +48,7 @@ with both Accept and Decline, and closing the window mid-game. All correct.
 | `client/ConnectionScreen.h/.cpp` | §7, §9, §10 — the gate in front of the menu |
 | `client/MainMenu.h/.cpp` | the four options (§8, §12) |
 | `client/Game.h/.cpp` | the shared board loop every mode uses (DESIGN decision 2) |
+| `client/ClientValidatedGame.h/.cpp` | the layer that owns a `ChessGame`; Local and Bot only (§17-18) |
 | `client/LocalGame.h/.cpp` | a two-human game — only what differs (§13, §17) |
 
 **Phase 3 — the Bot.** Code complete.
@@ -53,7 +59,18 @@ with both Accept and Decline, and closing the window mid-game. All correct.
 | `client/BotDifficulty.h/.cpp` | the three levels as data, and the menu that picks one (§43) |
 | `client/BotGame.h/.cpp` | a game against the engine, validated by our own rules (§18, §47) |
 
-`tests/perft_main.cpp` is the verification harness. It does not ship.
+**Phase 4 — the Server and Online play.** Code complete.
+
+| File | What it holds |
+|---|---|
+| `common/Protocol.h/.cpp` | every message, written and read by the same operators (§61-63) |
+| `server/HostedGame.h/.cpp` | one online game; the Server's authority over it (§22) |
+| `server/Matchmaker.h/.cpp` | the queue of clients waiting to be paired (§40-42) |
+| `server/Server.h/.cpp` | sockets, dispatch, the §59 guard, console logging (§57-60, §68-70) |
+| `client/OnlineGame.h/.cpp` | draws server state, sends requests, owns no rules engine (§23-24) |
+
+`tests/perft_main.cpp` and `tests/bot_match.cpp` are the verification harnesses.
+Neither ships.
 
 ## Verification status
 
@@ -61,7 +78,8 @@ with both Accept and Decline, and closing the window mid-game. All correct.
 15 million positions.** Start position depth 5 = 4,865,609; Kiwipete depth 4 =
 4,085,603. Re-run this after any change under `common/`:
 
-    g++ -std=c++17 -O2 -Icommon common/*.cpp tests/perft_main.cpp -o perft.exe
+    g++ -std=c++17 -O2 -Icommon common/*.cpp tests/perft_main.cpp -o perft.exe \
+        -lsfml-network -lsfml-system
     ./perft.exe
 
 Alongside it, roughly 180 direct assertions were run while building, covering
@@ -88,7 +106,7 @@ and disconnecting in any order.
 
       g++ -std=c++17 -O2 -Icommon -Iclient common/*.cpp client/StockfishEngine.cpp \
           client/BotDifficulty.cpp client/ConsoleInput.cpp tests/bot_match.cpp \
-          -o bot_match.exe
+          -o bot_match.exe -lsfml-network -lsfml-system
       ./bot_match.exe
 
   Six games, each pairing from both colours. The stronger level won all six by
@@ -99,28 +117,36 @@ and disconnecting in any order.
   open, `stockfish.exe` appears in Task Manager's **Details** tab with
   `client.exe` as its parent process.
 
-## Next step — Phase 4, the Server and Online play
+**Online play was verified by an automated protocol test** — a scratch program
+that connects as several clients at once and checks the Server's answers. 67
+checks, all passing, over: matchmaking and the waiting state; colour assignment;
+moves played out of turn and moves that are simply illegal, both rejected by the
+Server; two games running at once with no cross-talk; a client aiming a move at
+a game it is not in; draw offers accepted and declined; resignation; a client
+disconnecting mid-game; and malformed input of four kinds, after which the
+Server still pairs new clients.
 
-The biggest phase, and the one the requirements are strictest about. Before
-writing any of it, re-read §22-24 and DESIGN decisions 4 and 5.
+## How to test it — two clients and one server
 
-The two things that must be true by construction, not by care:
+Three console windows, all opened at the project root:
 
-- **§22-24.** The Server owns the board, the turn and the validation. The
-  Client never applies an online move itself and never treats its own request
-  as final. In practice: the Client's `OnlineGame` will have **no `ChessGame`
-  of its own** — only the last board the Server sent. That is what DESIGN
-  decision 2 was rearranged for, and it means the Client physically cannot
-  cheat rather than merely choosing not to.
-- **§60.** Never assume one game exists. Games live in a container keyed by id
-  from the first line written, and every message carries its game id so §59 —
-  never tell a client about a game it is not in — is checkable in one place.
+    .\server.exe          window 1
+    .\client.exe          window 2
+    .\client.exe          window 3
 
-`OnlineGame` will subclass `Game` like the other two, overriding
-`onOpponentTurn` to poll the Server rather than an engine.
+Both clients connect to `127.0.0.1` on the port the server printed, then choose
+**3) Online Game**. The first sees "Waiting for an opponent..."; when the second
+asks, both board windows open with colours assigned. Worth checking: moving out
+of turn does nothing, a draw offer appears only on the other window, resigning
+ends it on both, and closing one client mid-game ends the other's game with
+"disconnected" rather than "resigned".
 
-Phase 4 cannot be tested alone: it needs **two clients and one server running
-at once**, which the student must drive.
+## Next step — Phase 5, robustness (§64-70)
+
+Much of it is already standing, because Phase 4 could not be written without it:
+disconnections, malformed messages and console logging are all in place and
+tested. Phase 5 is where they are gone through against the requirements one at a
+time rather than assumed to be covered.
 
 ## Environment notes for the next session
 
