@@ -12,6 +12,15 @@ made, and stale comments and docs were fixed. §25 is met in the code and proved
 as far as one computer allows. Actually running it on two computers is the one
 check still outstanding, and it has to be done by hand.
 
+> **Superseded on DLLs.** After this audit the lecturer ruled that the
+> submission must contain no DLLs. The zip no longer has them, and the programs
+> are run from the MSYS2 UCRT64 shell, whose `PATH` supplies SFML's. So these
+> parts describe the package as it was on the day, not as it is now: runs R7,
+> R8, R10 and R11 (MSYS2 off `PATH` with bundled DLLs), the §82 row's "plus the
+> DLLs", the README changes about DLLs and double-clicking in Part 2, and the
+> "19 DLLs" row in Part 3. The current package is described in `docs/PLAN.md`,
+> Phase 7.
+
 ## What was run
 
 Each run is referred to by its tag in the evidence column below.

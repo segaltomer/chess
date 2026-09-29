@@ -124,10 +124,11 @@ already in `CLAUDE.md`, so it happens on its own.
 Everything is tracked except build output — so your source, the docs, the
 design rationale, the VS Code config and `CLAUDE.md` all go to GitHub.
 
-Deliberately not backed up, because all three are regenerable:
+Deliberately not backed up, because both are regenerable:
 
 - `gui_example.exe`, `client.exe`, `server.exe` — rebuilt with one command.
-- The 19 DLLs — re-copied with the `ldd` command in `CLAUDE.md`, hard rule 5.
+  They run from the MSYS2 UCRT64 shell, which supplies SFML's DLLs; the
+  submission ships none (`CLAUDE.md`, hard rule 5).
 - `stockfish/stockfish.exe` — 103 MB, which is over GitHub's 100 MB per-file
   limit and would be rejected. Re-download it from the Stockfish 19 release;
   the README records the exact build and its SHA-256 so you can verify you got

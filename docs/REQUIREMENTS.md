@@ -13,9 +13,10 @@ confirmation, and is the first item of Phase 7 in `docs/PLAN.md`.
 Everything else has been verified rather than assumed — the rules against the
 standard perft suite, the Bot's difficulty ordering by playing the levels
 against each other, and the Server against a test that connects as several
-Clients at once. The staged submission was run on this machine with MSYS2
-removed from `PATH`, so the bundled DLLs and the relative Stockfish path are
-known to be complete.
+Clients at once. The submission was unzipped into a fresh folder and run from
+the MSYS2 UCRT64 shell, as its README says, so the run instructions and the
+relative Stockfish path are known to work. It contains no DLLs, on the
+lecturer's instruction; the UCRT64 shell supplies SFML's.
 
 ## System structure
 - [x] 1. Two separate programs: Client and Server

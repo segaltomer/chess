@@ -7,8 +7,9 @@ The Client offers four things: a **Local Game** between two people at one
 keyboard, a **Player vs Bot** game against Stockfish at one of three difficulty
 levels, an **Online Game** against another Client through the Server, and Exit.
 
-Both executables are included and ready to run, so nothing has to be compiled to
-try it. If you would rather build it yourself, the commands are below.
+Both executables are included, so nothing has to be compiled to try it. They are
+run from the MSYS2 UCRT64 shell, as section 3 explains. If you would rather build
+them yourself, the commands are below.
 
 ---
 
@@ -25,11 +26,19 @@ To install the toolchain, in the **MSYS2 UCRT64** shell:
 pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-sfml
 ```
 
-Nothing else is needed. Stockfish is included; see section 10.
+This installation is needed to run the programs as well as to build them: they
+use its SFML and MinGW libraries at run time (section 3). Nothing else is
+needed. Stockfish is included; see section 10.
 
 ## 2. Compiling
 
-Run both commands from the project root, the folder that holds this README.
+Open the **MSYS2 UCRT64** shell and change to the project root, the folder that
+holds this README. Every command in this README is run there. MSYS2 writes the
+drive `C:\` as `/c/`, so for example:
+
+```bash
+cd "/c/Users/you/Downloads/216908467"
+```
 
 **Client:**
 
@@ -43,11 +52,7 @@ g++ -std=c++17 common/*.cpp client/*.cpp ProvidedGUI/ChessFrontend.cpp -IProvide
 g++ -std=c++17 common/*.cpp server/*.cpp -o server.exe -lsfml-network -lsfml-system
 ```
 
-Each is a single line, so it can be pasted into the MSYS2 UCRT64 shell, `cmd`
-or PowerShell without change. The `*.cpp` wildcards are expanded by g++ itself
-on MinGW, so they work in all three even where the shell does not expand them.
-In `cmd` or PowerShell, `C:\msys64\ucrt64\bin` has to be on `PATH` for `g++` to
-be found; the MSYS2 UCRT64 shell has it already.
+Each is a single line, so it can be pasted into the shell as it is.
 
 `common/` holds the chess rules and the protocol messages, and is compiled into
 both programs — the rules have to be identical in every mode, and the Server
@@ -56,38 +61,33 @@ Server links no `sfml-graphics`, since it shows no window.
 
 Both build without warnings under `-Wall -Wextra`.
 
-## 3. Before you run: two things that matter
+## 3. Before you run: the MSYS2 UCRT64 shell
 
-**Run the executables from the project root.** The provided GUI looks for the
-piece images relative to the current working directory. Started from anywhere
-else, the board draws lettered placeholder squares instead of pieces.
-Double-clicking `client.exe` or `server.exe` in Explorer is fine too, because
-Windows then starts each one in its own folder.
+**Run both programs from the MSYS2 UCRT64 shell, at the project root.** Two
+things depend on it:
 
-**The 19 runtime DLLs must sit beside the executables.** They are included in
-this folder. Alternatively, run from a shell with `C:\msys64\ucrt64\bin` on
-`PATH`, such as the MSYS2 UCRT64 shell.
+- The programs are linked dynamically against SFML and the MinGW runtime, and
+  those libraries are not part of this folder. Windows finds them because the
+  UCRT64 shell puts `C:\msys64\ucrt64\bin`, where pacman installed them, on
+  `PATH`.
+- The provided GUI looks for the piece images relative to the current working
+  directory. Started from anywhere else, the board draws lettered placeholder
+  squares instead of pieces.
 
-If a DLL is missing, Windows does not start the program at all. Depending on how
-it was launched, it either shows a dialog naming the missing DLL or ends the
-process at once with code `0xC0000135` and **no message at all**. If either
-program appears to do nothing when launched, that is why.
-
-The included DLLs match the included executables, built with the versions in
-section 1. Windows loads a DLL from the executable's own folder before it looks
-on `PATH`, so if you rebuild with a different MSYS2 version, copy the
-same-named DLLs from your `C:\msys64\ucrt64\bin` over these. Otherwise the new
-build may refuse to start with an "entry point not found" error.
+Started any other way — double-clicked in Explorer, or from `cmd` or
+PowerShell — a program starts only if `C:\msys64\ucrt64\bin` happens to be on
+`PATH`. Otherwise Windows refuses to start it: it either shows a dialog naming a
+missing library or ends the process at once with code `0xC0000135` and **no
+message at all**. If a program appears to do nothing when launched, that is why.
 
 ## 4. Running the Server
+
+In a UCRT64 shell at the project root:
 
 ```bash
 ./server.exe          # listens on the default port, 53000
 ./server.exe 53001    # or any port from 1024 to 65535
 ```
-
-The `./` is for the MSYS2 shell and PowerShell. In `cmd`, leave it out and type
-`server.exe`; the same applies to every command below.
 
 On startup it prints the port and **the two addresses a Client can use**:
 
@@ -107,12 +107,16 @@ its own use, and a server cannot bind inside one; `netsh int ipv4 show
 excludedportrange protocol=tcp` lists them. The default 53000 is outside them on
 a normal machine.
 
-It then runs until you close the window, logging every connection and
-disconnection, every entry to and exit from the matchmaking queue, every game
-created and who was assigned which colour, every move accepted or rejected and
-why, every draw offer and answer, every resignation, and every game ending.
+It then runs until you press Ctrl+C or close its shell window, logging every
+connection and disconnection, every entry to and exit from the matchmaking
+queue, every game created and who was assigned which colour, every move accepted
+or rejected and why, every draw offer and answer, every resignation, and every
+game ending.
 
 ## 5. Running a Client and connecting
+
+In a second UCRT64 shell window, also at the project root, since the Server is
+still running in the first:
 
 ```bash
 ./client.exe
@@ -173,9 +177,13 @@ the difference rather than take it on trust.
 
 ## 8. Online Game (menu option 3)
 
-Online play needs the Server and **two** Clients. Start the Server, then run
-`client.exe` twice — either twice on this computer, or once here and once on
+Online play needs the Server and **two** Clients. Start the Server in a UCRT64
+shell as in section 4, then run `client.exe` twice, each in its own UCRT64 shell
+window as in section 5 — either twice on this computer, or once here and once on
 another computer on the same network, using the LAN address the Server printed.
+The other computer needs the same MSYS2 installation (section 1) and a copy of
+this folder, and runs `client.exe` from its own UCRT64 shell.
+
 The first time `server.exe` runs, Windows Firewall may ask whether to allow it on
 the network. Allow it on private networks, or a Client on another computer will
 not be able to connect.
@@ -208,8 +216,9 @@ clicks at all.
 The Server supports any number of connected Clients and any number of
 independent games running at the same time. To see it:
 
-1. Start one Server.
-2. Start **four** Clients and connect all of them.
+1. Start one Server in a UCRT64 shell, as in section 4.
+2. Start **four** Clients, each in its own UCRT64 shell window, and connect all
+   of them.
 3. Choose Online Game in the first two — they are paired into game 1.
 4. Choose Online Game in the other two — they are paired into game 2.
 
@@ -249,7 +258,8 @@ running and disappears once its board window is closed.
 
 Three test programs are included under `tests/`. None of them is part of the
 Client or the Server — each has its own `main()` and none is picked up by the
-build commands in section 2.
+build commands in section 2. Build and run them like everything else, in a
+UCRT64 shell at the project root.
 
 **The chess rules**, checked with perft, which plays every legal move to a given
 depth and counts the positions reached. The counts for the standard test
@@ -287,8 +297,8 @@ messages. It needs a Server to talk to:
 
 ```bash
 g++ -std=c++17 -O2 -Icommon common/*.cpp tests/protocol_test.cpp -o protocol_test.exe -lsfml-network -lsfml-system
-./server.exe 53100            # one window
-./protocol_test.exe 53100     # another
+./server.exe 53100            # in one UCRT64 shell
+./protocol_test.exe 53100     # in a second UCRT64 shell
 ```
 
 103 checks; it exits 0 only if every one of them passed. As well as the cases
@@ -305,7 +315,6 @@ real move.
 .
 ├── client.exe            the Client
 ├── server.exe            the Server
-├── *.dll                 the 19 runtime DLLs
 ├── common/               chess rules and protocol, compiled into both programs
 ├── client/               console screens, GUI wiring, Bot, client networking
 ├── server/               listener, matchmaking, hosted games

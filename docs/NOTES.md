@@ -43,7 +43,9 @@ validates Local and Bot games (§17-18) while the Server validates Online ones
 **The tricky part:** the executables need 18 SFML and MinGW DLLs at runtime.
 Windows only looks next to the executable and on `PATH`, so the DLLs are copied
 into the project folder — and they must ship in the submission zip, because the
-grading machine will not have our `PATH`.
+grading machine will not have our `PATH`. *(Superseded: the lecturer later ruled
+out DLLs in the submission, so the programs are run from the MSYS2 UCRT64 shell
+instead. See the last entry.)*
 
 ---
 
@@ -368,9 +370,8 @@ instantly on launch printing nothing whatsoever — exit code `0xC0000135`. The
 `gui_example.exe`, which does no networking, so `libsfml-network-3.dll` was
 never among them. Windows reports a missing DLL by killing the process before
 `main` runs, with no message on the console. Worth remembering, because the
-symptom looks like a crash in code that has not executed yet. The DLLs are now
-collected with `ldd` from `client.exe` and `server.exe` (the command is in
-`CLAUDE.md`, hard rule 5).
+symptom looks like a crash in code that has not executed yet. The submission
+later dropped DLLs altogether; see the last entry.
 
 ---
 
@@ -908,3 +909,35 @@ what the screen shows, `./server.exe` offered to `cmd` users, which `cmd`
 rejects; and nothing said about `g++` needing to be on `PATH`, whether
 double-clicking the programs works, the firewall prompt on a second machine, or
 DLLs clashing after a rebuild with another MSYS2 version. Each was checked by running the thing it describes.
+
+---
+
+## No DLLs in the submission · README, the zip · §82, §85, §88-89
+
+**What changed.** The lecturer ruled that the submission must not include any
+DLLs, so the 19 that used to sit beside the executables came out of the zip. The
+README now runs everything, building and running alike, from the MSYS2 UCRT64
+shell.
+
+**Why the build did not change.** The programs still link SFML dynamically,
+using exactly the commands §88-89 give. Static linking would have made the DLLs
+unnecessary, but it adds flags to those commands, and the commands are the
+lecturer's own. So the DLLs have to come from somewhere at run time instead, and
+the UCRT64 shell provides them: it puts `C:\msys64\ucrt64\bin`, where pacman
+installed SFML, on `PATH`. That is also the environment §85 names, so asking the
+grader to use it asks for nothing new.
+
+**The tricky part — what the grader sees if they do it another way.**
+Double-clicking the executable, or starting it from `cmd` or PowerShell, uses a
+`PATH` that normally lacks that folder. Windows then refuses to start the
+program before `main` runs, either with a "was not found" dialog or silently
+with exit code `0xC0000135`. README section 3 says so in as many words, because
+a program that silently does nothing looks like a crash in our code. The same
+applies to a second computer used for §25: it needs the MSYS2 installation too.
+
+**Verified** by unzipping the new zip into a fresh folder. Outside the UCRT64
+shell, both programs exit `0xC0000135`, which proves no DLL is hiding in the
+package. Inside it, `./server.exe` and `./client.exe` run exactly as README
+sections 4 and 5 say. With that shell's `PATH`, an online game, a Local game and
+a Bot game all played through; Stockfish ran from the package's own folder and
+was gone when its window closed. Both README build commands also work there.

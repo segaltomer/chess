@@ -46,13 +46,14 @@ g++ -std=c++17 common/*.cpp server/*.cpp -o server.exe \
 4. Assets are resolved relative to the **current working directory**
    (`ProvidedGUI/assets/`, then `assets/`, then one and two levels up), so
    executables must be launched from the project root.
-5. Runtime needs 19 MinGW/SFML DLLs beside the executables. They are
-   gitignored but **must be included in the submission zip**. (It was 18 until
-   the server was written: the original set was gathered from `gui_example.exe`,
-   which does no networking, so `libsfml-network-3.dll` was missing and
-   `server.exe` died on launch with no message.) Collect them from the built
-   executables, in the MSYS2 UCRT64 shell at the project root:
-   `ldd client.exe server.exe | grep -i ucrt64 | awk '{print $3}' | sort -u | xargs -I{} cp {} .`
+5. **The submission zip must contain no DLLs** — the lecturer's instruction.
+   The build stays dynamic, with the README's commands exactly as §88-89 give
+   them; do not switch to static linking, which would change those commands.
+   The programs are therefore run from the MSYS2 UCRT64 shell (§85's
+   environment), which puts `C:\msys64\ucrt64\bin` and SFML's DLLs on `PATH`.
+   Any DLLs lying in the project root are gitignored local leftovers; nothing
+   may depend on them. Test the package from the UCRT64 shell, never with
+   copied DLLs.
 
 ## Working documents — read these first
 
@@ -366,8 +367,8 @@ git history stay as they are, and they are excluded from the zip.
 ## Submission
 
 - Zip named `<ID>.zip` containing all source, `ProvidedGUI/`, `client.exe`,
-  `server.exe`, the Stockfish binary, the required DLLs, and a README that
-  lets the grader compile and run every mode without guessing.
+  `server.exe`, the Stockfish binary, and a README that lets the grader
+  compile and run every mode without guessing. **No DLLs** (hard rule 5).
 - Exclude `.vscode/`, `docs/`, `.git/` and this file from the submission zip.
   They are tracked in git for backup, so removing them is a zip-time step —
   never delete them from the repo.

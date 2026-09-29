@@ -24,33 +24,42 @@ alone. All 89 are met. What it changed:
 - Stale comments in shipped files (three test headers, `Protocol.h`,
   `OnlineGame.h`) and stale facts across `docs/`.
 
-**`216908467.zip` is in the project root** — 86 entries, 82.3 MiB, everything
-inside one top-level folder `216908467/`. It is gitignored; rebuild it from the
-whitelist in `docs/PLAN.md` if anything shipped changes.
+**No DLLs in the submission — the lecturer's instruction.** The 19 DLLs are out
+of the zip. The build is unchanged (dynamic, the §88-89 commands exactly), and
+the README now runs everything from the MSYS2 UCRT64 shell, whose `PATH`
+supplies SFML's DLLs. `CLAUDE.md` hard rule 5 records this; do not reintroduce
+DLLs or switch to static linking.
 
-**How the package was verified:** unzipped into a path with a space and Hebrew
-letters, run with MSYS2 off `PATH`, with real Client windows driven by posting
-mouse clicks and captured to images — a full online game, a cancelled search, a
-Local game, a Bot game, and an online game through the LAN address. Both
-programs and all three test programs also build from the unzipped copy with the
-README's exact commands.
+**`216908467.zip` is in the project root** — 67 entries, 77.7 MiB, no DLLs,
+everything inside one top-level folder `216908467/`. It is gitignored; rebuild
+it from the whitelist in `docs/PLAN.md` if anything shipped changes.
+
+**How the package was verified:** unzipped into a fresh folder. Outside the
+UCRT64 shell both programs exit `0xC0000135`, proving no DLL is in the package;
+inside it, the server and a client run exactly as README sections 4-5 say. With
+that shell's `PATH`, real Client windows were driven by posted clicks through an
+online game, a Local game and a Bot game (Stockfish from the package's own
+folder). Both README build commands work there too. Earlier, the audit and the
+mock grading exercised every mode in far more depth (`docs/AUDIT.md`,
+`docs/GRADING.md`).
 
 **In progress:** nothing. **Files mid-edit:** none.
 
 **The one open item:** §25 on two real computers. Run `server.exe` and one
 Client here, a second Client on another computer on the same network using the
 LAN address the server prints, and allow `server.exe` through Windows Firewall
-when asked. The code side is proved (listens on `0.0.0.0`; an online game was
+when asked. The second computer needs MSYS2 with SFML installed and runs the
+Client from its own UCRT64 shell, since no DLLs ship. The code side is proved (listens on `0.0.0.0`; an online game was
 played through the LAN address), but this is the only check one machine cannot
 do.
 
 ## How to test it — two clients and one server
 
-Three console windows, all opened at the project root:
+Three MSYS2 UCRT64 shell windows, all at the project root:
 
-    .\server.exe          window 1
-    .\client.exe          window 2
-    .\client.exe          window 3
+    ./server.exe          shell 1
+    ./client.exe          shell 2
+    ./client.exe          shell 3
 
 Both clients connect to `127.0.0.1` on the port the server printed, then choose
 **3) Online Game**. The first shows "Waiting for opponent"; when the second

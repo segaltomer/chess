@@ -154,7 +154,8 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
       and connecting, a section for each of the three modes, several Clients
       and concurrent games, how Stockfish is integrated, and the environment
       requirements
-- [x] `client.exe`, `server.exe`, Stockfish binary, and the 19 DLLs present
+- [x] `client.exe`, `server.exe` and the Stockfish binary present. **No DLLs**,
+      on the lecturer's instruction; see the last item below
 - [x] No absolute paths anywhere in the source
 - [x] Cleanup pass — the staged tree is built from the whitelist below by
       copying in, and holds nothing else
@@ -162,16 +163,16 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
       as a possible blocker and is not: `stockfish.exe` is 98 MB but compresses
       well, and the whole submission comes to **82.3 MB** — under a 100 MB cap
       whichever way a megabyte is counted. 110 MB unpacked.
-- [x] Final check: the staged copy was run **with MSYS2 removed from `PATH`**,
-      which is the real test of the bundled DLLs. The Server starts and prints
-      its addresses, a Client connects and reaches the menu, and a Bot game
-      launches `stockfish.exe` from the staged folder's own `stockfish/` —
-      proving the path is relative to the executable — leaving no orphan behind.
+- [x] Final check: the unzipped copy is run from the MSYS2 UCRT64 shell, as the
+      README says. The Server starts and prints its addresses, a Client
+      connects and reaches the menu, and a Bot game launches `stockfish.exe`
+      from the unzipped folder's own `stockfish/` — proving the path is relative
+      to the executable — leaving no orphan behind.
 - [x] Zip named `<your ID>.zip` (§84) — `216908467.zip`, everything inside one
       top-level folder `216908467/`. §84 asks only for the archive's name (its
       "תיקיית ZIP" is Windows' "compressed folder", not a folder inside it); the
       top-level folder is kept so "Extract here" does not scatter the project.
-      Extracted elsewhere and run from there with MSYS2 off `PATH`: both
+      Extracted elsewhere and run from there in the UCRT64 shell: both
       programs work, Stockfish launches from the unzipped copy, the supplied
       files are byte-identical after the round trip, and Stockfish's SHA-256
       matches the README.
@@ -188,6 +189,13 @@ on the ones above it. `docs/DESIGN.md` is complete, so Phase 1 can start.
       `Example/`, `build_example.bat` and `GUI_USAGE.md` out of the zip (86
       entries now), and corrected the README in fourteen places. The unzipped
       package was run with real Client windows driven by scripted clicks.
+- [x] **No DLLs in the zip — the lecturer's instruction.** The 19 DLLs came
+      out. The build is unchanged: dynamic, with the §88-89 commands exactly.
+      Static linking was ruled out because it would change those commands. The
+      README now has every run step in the MSYS2 UCRT64 shell (§85's
+      environment), which puts SFML's DLLs on `PATH`, and a second computer for
+      §25 needs the same MSYS2 install. Verified by unzipping into a fresh
+      folder and running both programs from a UCRT64 shell there.
 
 ### What the zip contains — a whitelist, not a blacklist
 
@@ -201,7 +209,6 @@ common/  client/  server/ our sources - .h and .cpp only
 tests/                    the three verification programs - see below
 client.exe  server.exe    §82
 stockfish/                stockfish.exe + Copying.txt + AUTHORS (GPL - required)
-*.dll                     the 19 runtime DLLs
 ```
 
 **`tests/` ships, which reverses the earlier decision to leave it out.** Two
@@ -230,6 +237,9 @@ documented build commands are unaffected.
   top level reads as the project's build script but builds his demo instead.
   They stay in the repo, unmodified. See `docs/AUDIT.md`.
 - `gui_example.exe` — his demo's binary, not asked for.
+- `*.dll` — none, on the lecturer's instruction. The build stays dynamic with
+  the §88-89 commands, and the programs run from the MSYS2 UCRT64 shell, whose
+  `PATH` supplies SFML's DLLs (`CLAUDE.md`, hard rule 5).
 - `*.o`, `*.a`, any build intermediates.
 - Anything left over from setting the project up.
 

@@ -31,12 +31,15 @@ does not manage games, does not do networking, and does not decide who won
 (§2). It reports intent — `MoveRequested`, `ResignRequested` — and our code
 decides what that means.
 
-**Why are 18 DLLs sitting in the project folder?**
-The executables link dynamically against SFML and the MinGW runtime. Windows
-looks for those DLLs next to the executable and on `PATH`. The grading machine
-will not have our `PATH`, so the DLLs ship beside the executables in the
-submission zip. Without them the program dies at launch with
-"libsfml-graphics-3.dll was not found".
+**Your submission has no DLLs. How do the programs find SFML?**
+The executables link dynamically against SFML and the MinGW runtime, and Windows
+looks for those DLLs next to the executable and on `PATH`. The lecturer asked for
+no DLLs in the submission, so they come from `PATH`: the MSYS2 UCRT64 shell, the
+environment §85 names, puts `C:\msys64\ucrt64\bin`, where pacman installed SFML,
+on `PATH`. That is why the README runs everything from that shell. Started any
+other way, the program dies at launch with "libsfml-graphics-3.dll was not
+found". Static linking would remove the dependency, but it would change the
+build commands §88-89 give, so the build stayed dynamic.
 
 **Why is the chess rules code in `common/` rather than in the client?**
 Because it compiles into both programs. The Client validates Local and Bot
@@ -374,8 +377,9 @@ message at all, exit code `0xC0000135` — Windows kills a process for a missing
 DLL *before* `main` runs, so there is nothing on the console and the symptom
 looks like a crash in code that has not executed. The cause was that the
 project's runtime DLLs had been collected from the GUI example, which does no
-networking, so `libsfml-network-3.dll` was never among them. There are 19, and
-they are collected from `client.exe` and `server.exe`.
+networking, so `libsfml-network-3.dll` was never among them. The submission now
+ships no DLLs at all, so the same failure is what anyone sees who starts the
+programs outside the MSYS2 UCRT64 shell.
 
 
 ## Phase 4 — the Server and online play
@@ -603,12 +607,13 @@ comment, which `-Wcomment` objects to — was fixed.
 **What is in your submission zip, and what did you deliberately leave out?**
 What §82 asks for: the source of both programs (`common/`, `client/`,
 `server/`), `ProvidedGUI/` unchanged, `client.exe`, `server.exe` and the
-Stockfish binary, plus the README (§83) and the 19 DLLs the executables need to
-start. Also the three test programs, because §20 asks for the Bot levels to be
-*demonstrable* and the Bot match is the demonstration. Left out: the lecturer's
-`Example/`, `build_example.bat` and `GUI_USAGE.md`. Nothing asks for them, and a
-`.bat` file at the top of the submission looks like the project's build script
-when it actually builds his demo.
+Stockfish binary, plus the README (§83). Also the three test programs, because
+§20 asks for the Bot levels to be *demonstrable* and the Bot match is the
+demonstration. Left out: DLLs, because the lecturer asked for none (the programs
+run from the UCRT64 shell, which supplies them); and the lecturer's `Example/`,
+`build_example.bat` and `GUI_USAGE.md`. Nothing asks for those, and a `.bat` file
+at the top of the submission looks like the project's build script when it
+actually builds his demo.
 
 **Where is a game's result decided, and how does it reach the screen?**
 In our code, never the GUI's (§2, §39). `ChessGame` decides the result and the
@@ -620,18 +625,16 @@ puts the result in the side panel, because the GUI shows an empty status as
 box was closed.
 
 **How did you test the package itself, rather than your development folder?**
-By unzipping it into a folder with a space and Hebrew letters in its path, and
-running it from there with MSYS2 removed from `PATH`, so only the bundled DLLs
-could load. Client windows were driven by posting mouse clicks to them, and
-captured to images to check what a player sees. Both programs were also rebuilt
-from the unzipped copy with the README's exact commands, and the test programs
-run there.
+By unzipping it into a fresh folder and following the README from there, in the
+MSYS2 UCRT64 shell as it says. Client windows were driven by posting mouse clicks
+to them, and captured to images to check what a player sees. Both programs were
+also rebuilt from the unzipped copy with the README's exact commands, and the
+test programs run there.
 
-**A grader rebuilds your client with their own MSYS2 and it will not start.
-Why?**
-Probably DLL versions. Windows looks for a DLL in the executable's own folder
-before it looks on `PATH`, so a freshly built `client.exe` picks up the DLLs we
-shipped, not the ones that came with the compiler that built it. If that compiler
-is newer, the old `libstdc++-6.dll` may lack something the new build needs, and
-Windows reports "entry point not found". The README says to copy the same-named
-DLLs from their own `C:\msys64\ucrt64\bin` after rebuilding.
+**A grader double-clicks `client.exe` and nothing happens. Why?**
+Windows could not find SFML's DLLs. None are in the submission, so they have to
+come from `PATH`, and a double-click in Explorer uses the system `PATH`, which
+normally does not include `C:\msys64\ucrt64\bin`. Windows then refuses to start
+the program before `main` runs, with a "was not found" dialog or silently with
+exit code `0xC0000135`. Run from the MSYS2 UCRT64 shell, as README section 3
+says, it starts normally.
