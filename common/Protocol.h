@@ -24,6 +24,11 @@
 //
 // The whole wire format lives in this one file, written and read by the same
 // operators, so the two ends cannot drift apart (§63).
+//
+// Connecting and disconnecting (§62) have no message of their own: the TCP
+// connection is the Client's session. The Server gives a Client its id when it
+// accepts the connection, and when the connection closes it takes that Client
+// out of the waiting list and ends any game it was playing (§65-66).
 
 // The first byte of every message.
 //
@@ -74,7 +79,7 @@ struct MoveRequestMessage {
 // `board` is the 64 display characters in the engine's own ordering, so it goes
 // straight to the GUI. `sideToMove` is sent rather than a ready-made caption
 // because each of the two Clients words it differently ("Your move" against
-// "Opponent to move"), and only the Client knows which one it is.
+// "Player 4 to move"), and only the Client knows which one it is.
 struct GameStateMessage {
     std::int32_t gameId = 0;
     std::string board;

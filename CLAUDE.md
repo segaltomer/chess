@@ -30,7 +30,10 @@ g++ -std=c++17 common/*.cpp server/*.cpp -o server.exe \
 
 1. **Never modify anything in `ProvidedGUI/`.** Those files are supplied by the
    lecturer and are submitted unchanged. They have been verified byte-identical
-   to his zip. The same goes for `Example/` and `build_example.bat`.
+   to his zip. The same goes for `Example/`, `build_example.bat` and
+   `GUI_USAGE.md` — kept unchanged in the repo, but **not** put in the zip: §82
+   asks only for `ProvidedGUI/`, and a second `.bat` at the top level reads as
+   the project's build script. See `docs/AUDIT.md`.
 2. **No absolute paths anywhere in the source.** The project is graded on the
    lecturer's machine. Resolve everything relative to the executable or the
    working directory.
@@ -47,8 +50,9 @@ g++ -std=c++17 common/*.cpp server/*.cpp -o server.exe \
    gitignored but **must be included in the submission zip**. (It was 18 until
    the server was written: the original set was gathered from `gui_example.exe`,
    which does no networking, so `libsfml-network-3.dll` was missing and
-   `server.exe` died on launch with no message. The README's `ldd` command now
-   collects from `client.exe` and `server.exe` instead.)
+   `server.exe` died on launch with no message.) Collect them from the built
+   executables, in the MSYS2 UCRT64 shell at the project root:
+   `ldd client.exe server.exe | grep -i ucrt64 | awk '{print $3}' | sort -u | xargs -I{} cp {} .`
 
 ## Working documents — read these first
 

@@ -40,7 +40,7 @@ known to be complete.
 - [x] 16. Exit
 
 ## Game modes
-- [x] 17. Local: two humans, one Client; created, managed and validated on the Client; Server not involved
+- [x] 17. Local: two humans on one computer and one Client; created, managed and stored on the Client, and move legality checked on the Client; the Server does not manage it
 - [x] 18. Bot: created and managed on the Client; engine and bot logic run on the Client
 - [x] 19. At least three Bot difficulty levels
 - [x] 20. Difficulty differences significant and demonstrable
@@ -93,7 +93,7 @@ known to be complete.
 - [x] 47. Integration is yours; Stockfish selects the Bot move only — validation and game state stay in your system
 
 ## Draw offers
-- [x] 48. In Local or Online games either player can offer a draw via Offer Draw
+- [x] 48. In Local or Online games either player can offer a draw via the Draw Offer button (the provided GUI labels it "Offer Draw")
 - [x] 49. Local: the offer dialog appears on the same Client, for the opponent
 - [x] 50. Online: the offer travels through the Server and appears only on the opponent's Client
 - [x] 51. The receiving player can Accept or Decline
@@ -144,11 +144,13 @@ known to be complete.
 - [x] 82. All Client and Server source including ProvidedGUI, plus both executables and the Stockfish binary used
 - [x] 83. A README letting the checker compile and run with no guesswork: compiling, running the Server, where IP and port appear, running a Client and connecting, starting a Local Game, starting a Bot game and choosing difficulty, starting an Online Game and using matchmaking, running several Clients to demonstrate concurrent online games, how Stockfish is integrated, and any other environment requirement
 - [x] 84. All files in a zip named `<ID>.zip` — built as `216908467.zip` in the
-      project root, 82.3 MB, 89 entries, everything inside one top-level folder
-      `216908467/` so that both the PDF's wording ("in a folder named with your
-      ID") and this one are satisfied. Extracted and run from elsewhere with
-      MSYS2 off `PATH`; the supplied files are byte-identical after the round
-      trip and Stockfish's SHA-256 matches the README.
+      project root, everything inside one top-level folder `216908467/`.
+      **Corrected:** this note used to say the PDF asks for "a folder named with
+      your ID". It does not. The PDF's "תיקיית ZIP" is Windows' own name for a
+      zip file (a "compressed folder"), so §84 asks only for the archive name.
+      The top-level folder is kept anyway — it stops "Extract here" spilling
+      the whole project into whatever folder the grader is in — but it is a
+      convenience, not a requirement. See `docs/AUDIT.md`.
 
 ## Build environment
 - [x] 85. C++17 under MSYS2 UCRT64 / MinGW — verified, g++ 16.2.0

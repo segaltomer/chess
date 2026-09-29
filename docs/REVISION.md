@@ -145,7 +145,7 @@ the positions reached. Published counts exist for standard positions and every
 chess engine in the world agrees on them, so matching is evidence rather than
 optimism — it is not "the cases I thought to test pass".
 
-All 26 cases pass, about 15 million positions over the six standard positions,
+All 26 cases pass, about 16.5 million positions over the six standard positions,
 which were chosen by engine authors precisely because they are nasty: pins,
 discovered check, castling rights lost to a rook capture, under-promotion, and
 the en passant capture that is illegal because of the rank it clears. From the
@@ -442,7 +442,7 @@ agreed draws.
 **How can a player cancel a search for an opponent, given the console is not
 watching the keyboard?**
 The board window opens straight away, before there is an opponent, showing
-"Waiting for an opponent...". Closing it sends `CancelFindGame`. Waiting at the
+"Waiting for opponent". Closing it sends `CancelFindGame`. Waiting at the
 console instead would mean watching the keyboard while blocked on a socket,
 which needs platform-specific console code; this reuses the loop that already
 exists. The same mechanism covers leaving a live game — closing the window then
@@ -502,12 +502,13 @@ them.
 
 **How was any of this tested without two people and two computers?**
 With a program that connects as several clients at once and checks the Server's
-answers — 81 checks in all. It covers matchmaking and the waiting state, moves
+answers — 103 checks in all. It covers matchmaking and the waiting state, moves
 played out of turn and moves that are illegal, two games running at once with no
 cross-talk, a client aiming a move at a game it is not in, draw offers accepted
-and declined, resignation, a client disconnecting mid-game, and four kinds of
-malformed message, after which the Server is checked to still be pairing new
-clients. The console prompts were driven separately with deliberate rubbish at
+and declined, resignation, a client disconnecting mid-game, a game played to
+checkmate, promotion including to a knight, four kinds of malformed message and
+then 1,600 random ones, after which the Server is checked to still be pairing
+new clients. The console prompts were driven separately with deliberate rubbish at
 every one. What it cannot check is §25, two machines on one network; that needs
 a second computer.
 
@@ -595,3 +596,42 @@ because an unused public method is still code that has to be explained. One
 method that changed nothing was made `const`. And a warning I had introduced in
 all three test harnesses — a line-continuation backslash at the end of a `//`
 comment, which `-Wcomment` objects to — was fixed.
+
+
+## Phase 7 — the submission and the final audit
+
+**What is in your submission zip, and what did you deliberately leave out?**
+What §82 asks for: the source of both programs (`common/`, `client/`,
+`server/`), `ProvidedGUI/` unchanged, `client.exe`, `server.exe` and the
+Stockfish binary, plus the README (§83) and the 19 DLLs the executables need to
+start. Also the three test programs, because §20 asks for the Bot levels to be
+*demonstrable* and the Bot match is the demonstration. Left out: the lecturer's
+`Example/`, `build_example.bat` and `GUI_USAGE.md`. Nothing asks for them, and a
+`.bat` file at the top of the submission looks like the project's build script
+when it actually builds his demo.
+
+**Where is a game's result decided, and how does it reach the screen?**
+In our code, never the GUI's (§2, §39). `ChessGame` decides the result and the
+reason and words them — "Black wins!" and "White resigned". In an online game
+the Server's `ChessGame` does it and sends both strings in `GameOver`, so both
+Clients show identical text. The Client passes them to `showGameOver`, and also
+puts the result in the side panel, because the GUI shows an empty status as
+"Game in progress", which is what a finished game used to say once its summary
+box was closed.
+
+**How did you test the package itself, rather than your development folder?**
+By unzipping it into a folder with a space and Hebrew letters in its path, and
+running it from there with MSYS2 removed from `PATH`, so only the bundled DLLs
+could load. Client windows were driven by posting mouse clicks to them, and
+captured to images to check what a player sees. Both programs were also rebuilt
+from the unzipped copy with the README's exact commands, and the test programs
+run there.
+
+**A grader rebuilds your client with their own MSYS2 and it will not start.
+Why?**
+Probably DLL versions. Windows looks for a DLL in the executable's own folder
+before it looks on `PATH`, so a freshly built `client.exe` picks up the DLLs we
+shipped, not the ones that came with the compiler that built it. If that compiler
+is newer, the old `libstdc++-6.dll` may lack something the new build needs, and
+Windows reports "entry point not found". The README says to copy the same-named
+DLLs from their own `C:\msys64\ucrt64\bin` after rebuilding.

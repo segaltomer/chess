@@ -22,7 +22,7 @@
 // inherits `Game` rather than `ClientValidatedGame`.
 //
 // The board window opens as soon as the player chooses Online, before anyone
-// has been found to play against, and shows "Waiting for an opponent...". That
+// has been found to play against, and shows "Waiting for opponent". That
 // is what gives §42 its cancel: closing the window while still waiting sends
 // `CancelFindGame`, with no need for the console to watch the keyboard while
 // the window is up.

@@ -252,7 +252,7 @@ before that look. Nothing special was written for it. There is a test, and the
 get it wrong.
 
 **Verification.** With en passant in place the whole standard perft suite
-became meaningful and all 26 cases pass — about 15 million positions across six
+became meaningful and all 26 cases pass — about 16.5 million positions across six
 positions chosen by engine authors to be nasty. That is the evidence that
 §26-36 are right in general and not merely in the cases we thought to check:
 start position to depth 5 is 4,865,609, Kiwipete to depth 4 is 4,085,603.
@@ -368,8 +368,9 @@ instantly on launch printing nothing whatsoever — exit code `0xC0000135`. The
 `gui_example.exe`, which does no networking, so `libsfml-network-3.dll` was
 never among them. Windows reports a missing DLL by killing the process before
 `main` runs, with no message on the console. Worth remembering, because the
-symptom looks like a crash in code that has not executed yet. The README's
-`ldd` line now collects from `client.exe` and `server.exe`.
+symptom looks like a crash in code that has not executed yet. The DLLs are now
+collected with `ldd` from `client.exe` and `server.exe` (the command is in
+`CLAUDE.md`, hard rule 5).
 
 ---
 
@@ -687,7 +688,7 @@ which it has moved, which is §24 stated as a mechanism rather than a promise.
 was to wait at the console for the pairing, but then cancelling a search (§42)
 means watching the keyboard while blocked on a socket, which on Windows needs
 platform-specific console code. Opening the board immediately, showing "Waiting
-for an opponent...", and treating a window close as the cancel avoids all of
+for opponent", and treating a window close as the cancel avoids all of
 that and reuses the loop that already exists. The same idea covers walking out
 of a live game: closing the window then sends `Resign`, because leaving a game
 in progress concedes it, and the alternative is an opponent waiting forever for
@@ -749,7 +750,8 @@ needs a deliberately hostile client. What §64 actually requires — that a clie
 and tested, because a dropped socket fails the send immediately rather than
 blocking. The simpler version was chosen knowingly, not by accident.
 
-**Testing.** 81 automated checks against a running Server, plus the console
+**Testing.** 81 automated checks against a running Server (103 after the Phase 7
+audit added checkmate, promotion and bulk malformed input), plus the console
 prompts driven with deliberate rubbish at every one: a bad address, an address
 where a port belongs, a port out of range, words where numbers belong, and menu
 choices above, below and outside the range. Every one is refused with a specific
@@ -865,3 +867,44 @@ literal, so nothing can arrive on the console as mojibake; and all 56 source and
 documentation files are clean UTF-8 with no BOM. Both programs compile without a
 single warning under `-Wall -Wextra -Wpedantic -Wshadow`, which is stricter than
 anything the grader will use.
+
+---
+
+## Final audit against the PDF · README, `client/Game.cpp`, the zip · §39, §82-84
+
+**What it did.** Went through all 89 sections of the PDF itself, in both
+directions (anything missing, anything extra), and checked each one against the
+code and the package rather than against our own docs. Full results, with
+evidence per section, are in `docs/AUDIT.md`.
+
+**How it was verified.** The zip was unpacked into a folder whose path has a
+space and Hebrew letters in it, and run from there with MSYS2 removed from
+`PATH`. Real Client windows were driven by posting mouse clicks to them at the
+coordinates `ChessFrontend.cpp` draws its board and buttons at, and each window
+was captured to an image to check what a player would actually see. That
+covered a full online game (a move, an out-of-turn click, an illegal move, a
+declined draw, a cancelled and then a confirmed resignation), cancelling a
+search, a Local game, a Bot game, and an online game connected through the LAN
+address instead of `127.0.0.1`.
+
+**The one code fix — and why only a screenshot could find it.** Once a game
+ended and the player closed the summary box, the side panel said *Turn: Game
+over / Game status: Game in progress*. Our code cleared the status when the game
+ended, and the provided GUI draws an empty status as "Game in progress". Nothing
+in our code is wrong on its own; the problem only exists where the two meet, so
+no test that looks at our code alone could see it. The panel now shows the
+result title ("White wins!", "Draw", "Game ended"), all short enough for the
+260-pixel panel.
+
+**What left the zip.** `Example/`, `build_example.bat` and `GUI_USAGE.md`. §82
+asks for `ProvidedGUI/` only, and a `.bat` file at the top of the submission
+reads as the project's build script when it actually builds the lecturer's demo.
+They stay in the repo, untouched.
+
+**The README had nine wrong statements and four gaps**, none of them dramatic:
+a missing-DLL claim that testing disproved (both programs fail the same way), a
+cross-reference to the wrong section, on-screen text quoted differently from
+what the screen shows, `./server.exe` offered to `cmd` users, which `cmd`
+rejects; and nothing said about `g++` needing to be on `PATH`, whether
+double-clicking the programs works, the firewall prompt on a second machine, or
+DLLs clashing after a rebuild with another MSYS2 version. Each was checked by running the thing it describes.

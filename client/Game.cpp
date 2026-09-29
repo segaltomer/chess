@@ -12,8 +12,11 @@ void Game::refreshDisplay() {
     gui_.setBoard(boardForDisplay());
 
     if (isOver()) {
+        // §39: the result stays in the side panel once the summary box is
+        // closed. An empty status would not do, because the GUI shows an empty
+        // one as "Game in progress".
         gui_.setTurnText("Game over");
-        gui_.setStatusText("");
+        gui_.setStatusText(resultTitle());
         return;
     }
 

@@ -228,8 +228,14 @@ playing in.
 ## 5. What the Server holds
 
 **Decision:** one thread, using `sf::SocketSelector`. State: a container of
-connected clients, a container of active games keyed by game id, a matchmaking
-queue of client ids, and a map from client id to the game it is in.
+connected clients, a container of active games keyed by game id, and a
+matchmaking queue of client ids.
+
+> **Changed while building Phase 4.** This first listed a fourth structure, a
+> map from client id to the game it is in. It was never built: the game a client
+> is in is found by asking the games (`findGameOfClient`), because a second
+> table is a second thing that has to be kept in step with the first, and the
+> day it is not, a client is in a game the map says it is not in.
 
 **Why:** a single thread with a selector means there is no shared state between
 threads, therefore no locks, therefore an entire category of crash cannot

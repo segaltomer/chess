@@ -13,8 +13,7 @@
 // game proves little; the suite plays each pairing from both colours.
 //
 // This is a test harness, not part of the Client or the Server. It is not in
-// common/, client/ or server/, so it is never swept into their build commands,
-// and it is excluded from the submission zip.
+// common/, client/ or server/, so it is never swept into their build commands.
 //
 // Build and run from the project root:
 //   g++ -std=c++17 -O2 -Icommon -Iclient common/*.cpp client/StockfishEngine.cpp client/BotDifficulty.cpp client/ConsoleInput.cpp tests/bot_match.cpp -o bot_match.exe -lsfml-network -lsfml-system

@@ -10,8 +10,7 @@
 // narrows to a single position.
 //
 // This is a test harness, not part of the Client or the Server. It is not in
-// common/, client/ or server/, so it is never swept into their build commands,
-// and it is excluded from the submission zip.
+// common/, client/ or server/, so it is never swept into their build commands.
 //
 // Build and run from the project root:
 //   g++ -std=c++17 common/*.cpp tests/perft_main.cpp -Icommon -o perft.exe -lsfml-network -lsfml-system

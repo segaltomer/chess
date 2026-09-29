@@ -127,7 +127,7 @@ design rationale, the VS Code config and `CLAUDE.md` all go to GitHub.
 Deliberately not backed up, because all three are regenerable:
 
 - `gui_example.exe`, `client.exe`, `server.exe` — rebuilt with one command.
-- The 18 DLLs — re-copied with the `ldd` command in the README.
+- The 19 DLLs — re-copied with the `ldd` command in `CLAUDE.md`, hard rule 5.
 - `stockfish/stockfish.exe` — 103 MB, which is over GitHub's 100 MB per-file
   limit and would be rejected. Re-download it from the Stockfish 19 release;
   the README records the exact build and its SHA-256 so you can verify you got

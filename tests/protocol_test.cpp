@@ -14,8 +14,7 @@
 // framing and its socket handling.
 //
 // This is a test harness, not part of the Client or the Server. It is not in
-// common/, client/ or server/, so it is never swept into their build commands,
-// and it is excluded from the submission zip.
+// common/, client/ or server/, so it is never swept into their build commands.
 //
 // Build and run from the project root. Unlike the other two harnesses this one
 // needs a Server to talk to, so start one first on the same port:

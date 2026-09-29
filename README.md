@@ -25,11 +25,11 @@ To install the toolchain, in the **MSYS2 UCRT64** shell:
 pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-sfml
 ```
 
-Nothing else is needed. Stockfish is included; see section 8.
+Nothing else is needed. Stockfish is included; see section 10.
 
 ## 2. Compiling
 
-Run both commands from the project root.
+Run both commands from the project root, the folder that holds this README.
 
 **Client:**
 
@@ -46,6 +46,8 @@ g++ -std=c++17 common/*.cpp server/*.cpp -o server.exe -lsfml-network -lsfml-sys
 Each is a single line, so it can be pasted into the MSYS2 UCRT64 shell, `cmd`
 or PowerShell without change. The `*.cpp` wildcards are expanded by g++ itself
 on MinGW, so they work in all three even where the shell does not expand them.
+In `cmd` or PowerShell, `C:\msys64\ucrt64\bin` has to be on `PATH` for `g++` to
+be found; the MSYS2 UCRT64 shell has it already.
 
 `common/` holds the chess rules and the protocol messages, and is compiled into
 both programs — the rules have to be identical in every mode, and the Server
@@ -59,15 +61,23 @@ Both build without warnings under `-Wall -Wextra`.
 **Run the executables from the project root.** The provided GUI looks for the
 piece images relative to the current working directory. Started from anywhere
 else, the board draws lettered placeholder squares instead of pieces.
+Double-clicking `client.exe` or `server.exe` in Explorer is fine too, because
+Windows then starts each one in its own folder.
 
 **The 19 runtime DLLs must sit beside the executables.** They are included in
 this folder. Alternatively, run from a shell with `C:\msys64\ucrt64\bin` on
 `PATH`, such as the MSYS2 UCRT64 shell.
 
-If a DLL is missing, `client.exe` reports it. `server.exe` does not: Windows
-ends the process before `main` runs, so it exits instantly with code
-`0xC0000135` and **no message at all**. If the server appears to do nothing when
-launched, that is why.
+If a DLL is missing, Windows does not start the program at all. Depending on how
+it was launched, it either shows a dialog naming the missing DLL or ends the
+process at once with code `0xC0000135` and **no message at all**. If either
+program appears to do nothing when launched, that is why.
+
+The included DLLs match the included executables, built with the versions in
+section 1. Windows loads a DLL from the executable's own folder before it looks
+on `PATH`, so if you rebuild with a different MSYS2 version, copy the
+same-named DLLs from your `C:\msys64\ucrt64\bin` over these. Otherwise the new
+build may refuse to start with an "entry point not found" error.
 
 ## 4. Running the Server
 
@@ -75,6 +85,9 @@ launched, that is why.
 ./server.exe          # listens on the default port, 53000
 ./server.exe 53001    # or any port from 1024 to 65535
 ```
+
+The `./` is for the MSYS2 shell and PowerShell. In `cmd`, leave it out and type
+`server.exe`; the same applies to every command below.
 
 On startup it prints the port and **the two addresses a Client can use**:
 
@@ -106,9 +119,10 @@ why, every draw offer and answer, every resignation, and every game ending.
 ```
 
 It asks for the Server's address and then the port — the two values the Server
-printed. **The main menu appears only after the connection succeeds.** A bad
-address, a bad port or a Server that is not running produces a clear message and
-the choice to try again, change the address, change the port, or exit.
+printed. **The main menu appears only after the connection succeeds.** An
+address or port that is not valid is explained and asked for again. A Server
+that cannot be reached produces a clear message and the choice to try again,
+change the address, change the port, or exit.
 
 Once connected:
 
@@ -162,19 +176,23 @@ the difference rather than take it on trust.
 Online play needs the Server and **two** Clients. Start the Server, then run
 `client.exe` twice — either twice on this computer, or once here and once on
 another computer on the same network, using the LAN address the Server printed.
+The first time `server.exe` runs, Windows Firewall may ask whether to allow it on
+the network. Allow it on private networks, or a Client on another computer will
+not be able to connect.
 
 In both Clients, connect and choose **3**.
 
-The first Client to ask opens its board showing "Waiting for an opponent...".
+The first Client to ask opens its board showing "Waiting for opponent".
 When the second Client asks, the **Server pairs them**, creates the game,
 assigns one White and one Black, and tells both that it has started. Closing the
 window while still waiting cancels the search.
 
 The Server owns the game. A click sends it a request and nothing on the board
 changes; the piece moves only when the Server sends back a position in which it
-has moved. So a move made out of turn, or one that is not legal, simply does
-nothing on the board — the reason appears in the status panel and on the
-Server's console.
+has moved. So a move that is not legal simply does nothing on the board: the
+Server refuses it, and the reason appears in the status panel and on the
+Server's console. While it is the opponent's turn the board does not accept
+clicks at all.
 
 - **Offer Draw** travels through the Server and appears only on the opponent's
   window. Accepting ends the game as a draw on both; declining is reported back
@@ -220,12 +238,12 @@ Stockfish **chooses the Bot's move and nothing else.** Its answer is a string,
 which this project converts to a move and puts through exactly the same legality
 check a human's mouse click goes through. Move legality, whose turn it is, and
 the result of the game all stay in this project's own code. The engine process
-is started when the game begins and shut down when it ends, so it never outlives
-the Client.
+is started when the game begins and shut down when its board window is closed,
+so it never outlives the Client.
 
 You can confirm it really is a separate process: start a Bot game and look in
 Task Manager's **Details** tab, where `stockfish.exe` appears while the game is
-running and disappears when the Client closes.
+running and disappears once its board window is closed.
 
 ## 11. Verifying it (optional)
 
@@ -246,7 +264,7 @@ g++ -std=c++17 -O2 -Icommon common/*.cpp tests/perft_main.cpp -o perft.exe -lsfm
 (`common/` holds the protocol messages as well as the rules, so anything built
 from `common/*.cpp` links SFML Network even when, as here, it opens no socket.)
 
-All 26 cases pass, about 15 million positions.
+All 26 cases pass, about 16.5 million positions, in roughly 15 seconds.
 
 **The Bot's difficulty levels**, checked by making them play each other, so the
 difference is measured rather than judged by eye:
@@ -257,7 +275,9 @@ g++ -std=c++17 -O2 -Icommon -Iclient common/*.cpp client/StockfishEngine.cpp cli
 ```
 
 Each pairing is played from both colours, so a win cannot be explained by moving
-first. The stronger level wins all six games by checkmate.
+first. Every move is a real engine search, so the six games take three to four
+minutes. In every run so far the stronger level has won all six by checkmate;
+the weaker levels choose partly at random, so the margins vary from run to run.
 
 **The Server and the protocol**, checked by connecting as several Clients at
 once — which is how the things that cannot be seen by playing one game get
@@ -294,15 +314,11 @@ real move.
 │   ├── ChessFrontend.hpp
 │   ├── ChessFrontend.cpp
 │   └── assets/           12 piece images
-├── Example/main.cpp      the supplied GUI demo, unmodified
-├── build_example.bat     supplied, unmodified
-├── GUI_USAGE.md          the supplied GUI API reference
 ├── stockfish/            Stockfish 19 engine, its licence and authors
 └── README.md
 ```
 
-`ProvidedGUI/`, `Example/`, `GUI_USAGE.md` and `build_example.bat` are exactly
-as supplied and have not been modified.
+`ProvidedGUI/` is exactly as supplied and has not been modified.
 
 SHA-256 of `stockfish/stockfish.exe`:
 `45bc8e4969147db9c2eb533810637994619bff0eacc81ccfd9854394901bcbd0`
